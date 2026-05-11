@@ -3427,10 +3427,10 @@ react-is@^17.0.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.2.tgz#e691d4a8e9c789365655539ab372762b0efb54f0"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
 
-"react-is@^18.2.0 || ^19.0.0", react-is@^19.2.3, react-is@^19.2.5:
-  version "19.2.5"
-  resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.2.5.tgz#7e7b54143e9313fed787b23fd4295d5a23872ad9"
-  integrity sha512-Dn0t8IQhCmeIT3wu+Apm1/YVsJXsGWi6k4sPdnBIdqMVtHtv0IGi6dcpNpNkNac0zB2uUAqNX3MHzN8c+z2rwQ==
+"react-is@^18.2.0 || ^19.0.0", react-is@^19.2.3, react-is@^19.2.5, react-is@^19.2.6:
+  version "19.2.6"
+  resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.2.6.tgz#aeee6159b159eb7f520d672cffcc69e7052d288f"
+  integrity sha512-XjBR15BhXuylgWGuslhDKqlSayuqvqBX91BP8pauG8kd1zY8kotkNWbXksTCNRarse4kuGbe2kIY05ARtwNIvw==
 
 "react-router-dom@^6.28.1 || ^7.1.1", react-router-dom@^7.15.0:
   version "7.15.0"
