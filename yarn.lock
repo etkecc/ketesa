@@ -587,10 +587,10 @@
   dependencies:
     "@babel/runtime" "^7.28.6"
 
-"@mui/utils@^7.3.10", "@mui/utils@^7.3.9":
-  version "7.3.10"
-  resolved "https://registry.yarnpkg.com/@mui/utils/-/utils-7.3.10.tgz#b74050131ca9022c0815d16f54f1a6d757ab343d"
-  integrity sha512-7y2eIfy0h7JPz+Yy4pS+wgV68d46PuuxDqKBN4Q8VlPQSsCAGwroMCV6xWyc7g9dvEp8ZNFsknc59GHWO+r6Ow==
+"@mui/utils@^7.3.10", "@mui/utils@^7.3.11":
+  version "7.3.11"
+  resolved "https://registry.yarnpkg.com/@mui/utils/-/utils-7.3.11.tgz#493f46f053fe3a692e041b1b6b8295e2f46d9448"
+  integrity sha512-XTjGnifwteg71/ij+0e7Y7d+hwyntMYP5wPoA/g2drdGH+Flkvjwy0OfrVpKBbaOvofq4zU/LIyUZyKgmWu18g==
   dependencies:
     "@babel/runtime" "^7.28.6"
     "@mui/types" "^7.4.12"
