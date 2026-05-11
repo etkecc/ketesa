@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+vi.mock("./mas-utils", async () => {
+  const actual = await vi.importActual<typeof import("./mas-utils")>("./mas-utils");
+  return { ...actual, isMAS: vi.fn() };
+});
+
 vi.mock("../http", () => ({
   jsonClient: vi.fn(),
 }));
@@ -14,7 +19,7 @@ vi.mock("./synapse", () => ({
 }));
 
 import { wrapWithLifecycle } from "./lifecycle";
-import { setIsMAS } from "./mas-utils";
+import { isMAS } from "./mas-utils";
 import { jsonClient } from "../http";
 import { getMASUsersAsMainResource } from "./mas";
 
@@ -51,12 +56,13 @@ beforeEach(() => {
   localStorage.setItem("base_url", SYNAPSE_BASE);
   localStorage.setItem("home_server", HOMESERVER);
   localStorage.setItem("token_endpoint", "https://mas.example.com/oauth2/token");
+  vi.mocked(isMAS).mockReturnValue(false);
   vi.mocked(jsonClient).mockResolvedValue({ json: {} } as any);
 });
 
 describe("lifecycle.beforeUpdate — MAS mode, no mas_id (Synapse-only user)", () => {
   beforeEach(() => {
-    setIsMAS(true);
+    vi.mocked(isMAS).mockReturnValue(true);
   });
 
   it("does not dispatch MAS action calls when admin/locked/deactivated change", async () => {
@@ -91,7 +97,7 @@ describe("lifecycle.beforeUpdate — MAS mode, no mas_id (Synapse-only user)", (
 
 describe("lifecycle.beforeUpdate — MAS mode, with mas_id (regression guard)", () => {
   beforeEach(() => {
-    setIsMAS(true);
+    vi.mocked(isMAS).mockReturnValue(true);
   });
 
   it("dispatches MAS action calls for admin/locked/deactivated changes", async () => {
