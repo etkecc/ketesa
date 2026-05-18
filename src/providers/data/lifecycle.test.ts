@@ -285,6 +285,62 @@ describe("getMASUsersAsMainResource.delete", () => {
     expect(calls[0].method).toBe(calls[1].method);
   });
 
+  it("(deleteMany shape) reads mas_id from meta.records when previousData is absent", async () => {
+    const calls: { url: string; method?: string }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: any) => {
+      calls.push({ url, method: opts?.method });
+      return { json: {} } as any;
+    });
+
+    const res = getMASUsersAsMainResource();
+    // Simulates the per-id invocation inside dataProvider.deleteMany when a caller passes
+    // meta.records to thread per-record mas_id through. DeleteManyParams carries no
+    // previousData by contract — see ra-core types.d.ts:185.
+    const result = await res.delete({
+      id: "@alice:hs.example.com",
+      meta: {
+        records: [
+          { id: "@alice:hs.example.com", mas_id: "01HABCDEFULID" },
+          { id: "@bot:hs.example.com", mas_id: undefined },
+        ],
+      },
+    } as any);
+
+    const masDeactivates = calls.filter(
+      c => c.method === "POST" && /\/api\/admin\/v1\/users\/[^/]+\/deactivate$/.test(c.url)
+    );
+    expect(masDeactivates).toHaveLength(1);
+    expect(masDeactivates[0].url).toContain("/api/admin/v1/users/01HABCDEFULID/deactivate");
+
+    // No Synapse v2 PUT fallback when meta.records resolved mas_id.
+    const synapsePuts = calls.filter(c => c.method === "PUT" && c.url.includes("/_synapse/admin/v2/users/"));
+    expect(synapsePuts).toHaveLength(0);
+
+    expect(result.deactivated).toBe(true);
+    expect(result.id).toBe("@alice:hs.example.com");
+  });
+
+  it("(deleteMany shape, no mas_id in meta) falls through to Synapse v2 PUT", async () => {
+    const calls: { url: string; method?: string; body?: string }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: any) => {
+      calls.push({ url, method: opts?.method, body: opts?.body });
+      return { json: {} } as any;
+    });
+
+    const res = getMASUsersAsMainResource();
+    await res.delete({
+      id: "@bot:hs.example.com",
+      meta: { records: [{ id: "@bot:hs.example.com", mas_id: undefined }] },
+    } as any);
+
+    const synapsePuts = calls.filter(c => c.method === "PUT" && c.url.includes("/_synapse/admin/v2/users/"));
+    expect(synapsePuts).toHaveLength(1);
+    expect(JSON.parse(synapsePuts[0].body || "{}")).toEqual({ deactivated: true });
+
+    // No MAS deactivate call when mas_id is absent from both sources.
+    expect(calls.some(c => /\/api\/admin\/v1\/users\/[^/]+\/deactivate$/.test(c.url))).toBe(false);
+  });
+
   it("idempotency (no mas_id): two runs produce exactly one Synapse PUT per run, same shape", async () => {
     const calls: { url: string; method?: string; body?: string }[] = [];
     vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: any) => {

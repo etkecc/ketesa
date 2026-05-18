@@ -456,11 +456,26 @@ export const getMASUsersAsMainResource = () => ({
   // MAS deactivate when the user has a MAS account; Synapse v2 PUT {deactivated:true} for
   // Synapse-only users (appservice/bot). Returns the previousData record so RA's local cache
   // reflects the new state — there is no canonical post-delete record to fetch.
+  //
+  // mas_id resolution order: (1) previousData.mas_id — populated for single-user delete by
+  // RA's DeleteParams contract; (2) meta.records[id].mas_id — fallback for deleteMany, whose
+  // DeleteManyParams shape carries no per-record previousData. Callers wiring useDeleteMany
+  // on this resource must thread the records list through meta to get correct MAS dispatch;
+  // without it, bulk-delete silently falls through to Synapse v2 PUT and MAS sessions are not
+  // revoked.
   delete: async (params: DeleteParams) => {
     const masBaseUrl = getMASBaseUrl();
     const synapseBaseUrl = localStorage.getItem("base_url") || "";
-    const masId = (params.previousData as { mas_id?: string } | undefined)?.mas_id;
     const id = String(params.id);
+
+    const previousMasId = (params.previousData as { mas_id?: string } | undefined)?.mas_id;
+    // records MUST be an Array<{id, mas_id}>; a plain-object map is not supported
+    // and will silently fall back to Synapse v2 PUT — by design.
+    const metaRecords = (params.meta as { records?: unknown } | undefined)?.records;
+    const fromMeta = Array.isArray(metaRecords)
+      ? (metaRecords as { id?: unknown; mas_id?: string }[]).find(r => r && String(r.id) === id)?.mas_id
+      : undefined;
+    const masId = previousMasId ?? fromMeta;
 
     if (masId && masBaseUrl) {
       await jsonClient(`${masBaseUrl}/api/admin/v1/users/${encodeURIComponent(masId)}/deactivate`, {
