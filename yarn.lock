@@ -879,10 +879,10 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-paragraph/-/extension-paragraph-3.23.2.tgz#21b445313f118f97cdc71678e57a96b7f5aadd16"
   integrity sha512-UzHx5zOi9fjhC9TAqHeD7BV5eJIA3t65pa2Mq8b54V9nrIg1yAlgiafU0WDWoom11TF+IWxz5JBsjlW0/P/VeQ==
 
-"@tiptap/extension-placeholder@^3.23.2":
-  version "3.23.2"
-  resolved "https://registry.yarnpkg.com/@tiptap/extension-placeholder/-/extension-placeholder-3.23.2.tgz#2b98b1c365afff9d9c65cf54baa9c84e6897a80a"
-  integrity sha512-HTLOE+xrj9B4wTx1ssMfLiTC8sxy1GdzCK1hqm7EACmnFbY9yH27QzXDfOKbo/J4+Ffg64eSqjs/NRnQwMWAww==
+"@tiptap/extension-placeholder@^3.23.4":
+  version "3.23.4"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-placeholder/-/extension-placeholder-3.23.4.tgz#7f734be90f59f0f2e54d4a059bf820b256337d60"
+  integrity sha512-yHtAZkFR9M2AQmCi555w4ns1BBCqwRyYDYMtd10DBvqPX7T3TmGerPdUfI6sLr74GxnZ5zHOnOYdwAbeG5JzNw==
 
 "@tiptap/extension-strike@^3.23.2":
   version "3.23.2"
