@@ -805,9 +805,16 @@ const UserEditToolbar = () => {
       <div className={ToolbarClasses.defaultToolbar}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <SaveButton />
-          <UserPreventSelfDelete ownUserIsSelected={ownUserIsSelected} systemUserIsSelected={systemUserIsSelected}>
-            <DeleteButton />
-          </UserPreventSelfDelete>
+          {record && record.id && (
+            <UserPreventSelfDelete ownUserIsSelected={ownUserIsSelected} systemUserIsSelected={systemUserIsSelected}>
+              <DeleteUserButton
+                selectedIds={[record.id]}
+                confirmTitle="resources.users.helper.erase"
+                confirmContent="resources.users.helper.erase_text"
+                masIdMap={record?.mas_id ? { [String(record.id)]: String(record.mas_id) } : undefined}
+              />
+            </UserPreventSelfDelete>
+          )}
         </Toolbar>
       </div>
     </>

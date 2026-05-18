@@ -207,3 +207,104 @@ describe("getMASUsersAsMainResource.update", () => {
     expect(calls.some(u => u.includes("/_synapse/admin/v2/users/"))).toBe(true);
   });
 });
+
+describe("getMASUsersAsMainResource.delete", () => {
+  it("(with mas_id) POSTs to the MAS deactivate endpoint", async () => {
+    const calls: { url: string; method?: string }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: any) => {
+      calls.push({ url, method: opts?.method });
+      return { json: {} } as any;
+    });
+
+    const res = getMASUsersAsMainResource();
+    const result = await res.delete({
+      id: "@alice:hs.example.com",
+      previousData: { id: "@alice:hs.example.com", mas_id: "01HABCDEFULID", deactivated: false } as any,
+    });
+
+    const masDeactivates = calls.filter(
+      c => c.method === "POST" && /\/api\/admin\/v1\/users\/[^/]+\/deactivate$/.test(c.url)
+    );
+    expect(masDeactivates).toHaveLength(1);
+    expect(masDeactivates[0].url).toContain("/api/admin/v1/users/01HABCDEFULID/deactivate");
+
+    // No Synapse v2 PUT fallback when mas_id is present
+    const synapsePuts = calls.filter(c => c.method === "PUT" && c.url.includes("/_synapse/admin/v2/users/"));
+    expect(synapsePuts).toHaveLength(0);
+
+    expect(result.deactivated).toBe(true);
+    expect(result.id).toBe("@alice:hs.example.com");
+    // previousData spread is preserved — RA's local cache needs the full record.
+    expect(result.mas_id).toBe("01HABCDEFULID");
+  });
+
+  it("(no mas_id) PUTs {deactivated:true} to Synapse v2 admin users", async () => {
+    const calls: { url: string; method?: string; body?: string }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: any) => {
+      calls.push({ url, method: opts?.method, body: opts?.body });
+      return { json: {} } as any;
+    });
+
+    const res = getMASUsersAsMainResource();
+    const result = await res.delete({
+      id: "@bot:hs.example.com",
+      previousData: { id: "@bot:hs.example.com", mas_id: undefined, deactivated: false } as any,
+    });
+
+    const synapsePuts = calls.filter(c => c.method === "PUT" && c.url.includes("/_synapse/admin/v2/users/"));
+    expect(synapsePuts).toHaveLength(1);
+    expect(JSON.parse(synapsePuts[0].body || "{}")).toEqual({ deactivated: true });
+
+    // No MAS deactivate call when mas_id is absent
+    expect(calls.some(c => /\/api\/admin\/v1\/users\/[^/]+\/deactivate$/.test(c.url))).toBe(false);
+
+    expect(result.deactivated).toBe(true);
+    expect(result.id).toBe("@bot:hs.example.com");
+  });
+
+  it("idempotency (with mas_id): two runs produce exactly one side-effect per run, same shape", async () => {
+    const calls: { url: string; method?: string }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: any) => {
+      calls.push({ url, method: opts?.method });
+      return { json: {} } as any;
+    });
+
+    const res = getMASUsersAsMainResource();
+    const params = {
+      id: "@alice:hs.example.com",
+      previousData: { id: "@alice:hs.example.com", mas_id: "01HABCDEFULID" } as any,
+    };
+
+    await res.delete(params);
+    expect(calls).toHaveLength(1);
+
+    await res.delete(params);
+    expect(calls).toHaveLength(2);
+    // Same call shape both times — no fan-out, no accumulation.
+    expect(calls[0].url).toBe(calls[1].url);
+    expect(calls[0].method).toBe(calls[1].method);
+  });
+
+  it("idempotency (no mas_id): two runs produce exactly one Synapse PUT per run, same shape", async () => {
+    const calls: { url: string; method?: string; body?: string }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: any) => {
+      calls.push({ url, method: opts?.method, body: opts?.body });
+      return { json: {} } as any;
+    });
+
+    const res = getMASUsersAsMainResource();
+    const params = {
+      id: "@bot:hs.example.com",
+      previousData: { id: "@bot:hs.example.com", mas_id: undefined } as any,
+    };
+
+    await res.delete(params);
+    expect(calls).toHaveLength(1);
+
+    await res.delete(params);
+    expect(calls).toHaveLength(2);
+    expect(calls[0].url).toBe(calls[1].url);
+    expect(calls[0].method).toBe("PUT");
+    expect(JSON.parse(calls[0].body || "{}")).toEqual({ deactivated: true });
+  });
+});

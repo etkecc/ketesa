@@ -452,6 +452,28 @@ export const getMASUsersAsMainResource = () => ({
 
     return factory.getOne({ id });
   },
+  // Routes single-user delete (== deactivate in MAS mode) through the right surface:
+  // MAS deactivate when the user has a MAS account; Synapse v2 PUT {deactivated:true} for
+  // Synapse-only users (appservice/bot). Returns the previousData record so RA's local cache
+  // reflects the new state — there is no canonical post-delete record to fetch.
+  delete: async (params: DeleteParams) => {
+    const masBaseUrl = getMASBaseUrl();
+    const synapseBaseUrl = localStorage.getItem("base_url") || "";
+    const masId = (params.previousData as { mas_id?: string } | undefined)?.mas_id;
+    const id = String(params.id);
+
+    if (masId && masBaseUrl) {
+      await jsonClient(`${masBaseUrl}/api/admin/v1/users/${encodeURIComponent(masId)}/deactivate`, {
+        method: "POST",
+      });
+    } else {
+      await jsonClient(`${synapseBaseUrl}/_synapse/admin/v2/users/${encodeURIComponent(id)}`, {
+        method: "PUT",
+        body: JSON.stringify({ deactivated: true }),
+      });
+    }
+    return { ...(params.previousData || {}), id, deactivated: true };
+  },
 });
 
 export const getMASUserEmailsResource = () => ({

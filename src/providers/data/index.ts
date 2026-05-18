@@ -669,13 +669,20 @@ const baseDataProvider: SynapseDataProvider = {
 
     if ("delete" in res) {
       const del = res.delete(params);
-      const endpoint_url = baseUrl + del.endpoint;
+      // Async resources (e.g. MAS users) opt into a Promise-returning delete that handles
+      // its own dispatch and returns the deleted record; sync resources return {endpoint, method, body?}.
+      if (del && typeof (del as Promise<unknown>).then === "function") {
+        const data = await (del as Promise<RaRecord>);
+        return { data };
+      }
+      const sync = del as { endpoint: string; method?: string; body?: unknown; response?: (prev: any) => any };
+      const endpoint_url = baseUrl + sync.endpoint;
       const { json } = await jsonClient(endpoint_url, {
-        method: "method" in del ? del.method : "DELETE",
-        body: "body" in del ? JSON.stringify(del.body) : null,
+        method: "method" in sync && sync.method ? sync.method : "DELETE",
+        body: "body" in sync ? JSON.stringify(sync.body) : null,
       });
-      if (del?.response) {
-        return { data: del.response(params.previousData) };
+      if (sync?.response) {
+        return { data: sync.response(params.previousData) };
       }
 
       return { data: json };
@@ -695,12 +702,18 @@ const baseDataProvider: SynapseDataProvider = {
 
     if ("delete" in res) {
       const responses = await Promise.all(
-        params.ids.map(id => {
+        params.ids.map(async id => {
           const del = res.delete({ ...params, id: id });
-          const endpoint_url = baseUrl + del.endpoint;
+          // Async-promise resources handle their own dispatch.
+          if (del && typeof (del as Promise<unknown>).then === "function") {
+            const data = await (del as Promise<RaRecord>);
+            return { json: data };
+          }
+          const sync = del as { endpoint: string; method?: string; body?: unknown };
+          const endpoint_url = baseUrl + sync.endpoint;
           return jsonClient(endpoint_url, {
-            method: "method" in del ? del.method : "DELETE",
-            body: "body" in del ? JSON.stringify(del.body) : null,
+            method: "method" in sync && sync.method ? sync.method : "DELETE",
+            body: "body" in sync ? JSON.stringify(sync.body) : null,
           });
         })
       );
