@@ -31,6 +31,7 @@ import {
   Divider,
   FormControl,
   InputLabel,
+  LinearProgress,
   List as MuiList,
   ListItem,
   ListItemButton,
@@ -47,7 +48,7 @@ import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrayInput,
   ArrayField,
@@ -133,7 +134,12 @@ import { DATE_FORMAT } from "../../utils/date";
 import { decodeURLComponent } from "../../utils/safety";
 import { isSystemUser } from "../../utils/mxid";
 import { formatBytes } from "../../utils/formatBytes";
-import { generateRandomPassword } from "../../utils/password";
+import {
+  evaluatePasswordStrength,
+  generateRandomPassword,
+  MIN_PASSWORD_SCORE,
+  type PasswordStrength,
+} from "../../utils/password";
 import { UserPreventSelfDelete } from "./List";
 import { Datagrid, EmptyState } from "../../components/layout";
 
@@ -851,6 +857,28 @@ export const UserBooleanInput = (props: React.ComponentProps<typeof BooleanInput
   );
 };
 
+const STRENGTH_LABELS = ["Very weak", "Weak", "Fair", "Good", "Strong"] as const;
+const STRENGTH_COLORS = ["error", "error", "warning", "success", "success"] as const;
+
+const PasswordStrengthMeter = ({ strength }: { strength: PasswordStrength }) => {
+  const { score, warning, suggestions } = strength;
+  const feedback = warning || suggestions[0] || "";
+  return (
+    <Box sx={{ mt: -0.5, mb: 1 }}>
+      <LinearProgress
+        variant="determinate"
+        value={((score + 1) / 5) * 100}
+        color={STRENGTH_COLORS[score]}
+        sx={{ height: 6, borderRadius: 3 }}
+      />
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+        {STRENGTH_LABELS[score]}
+        {feedback && ` — ${feedback}`}
+      </Typography>
+    </Box>
+  );
+};
+
 export const UserPasswordInput = (props: React.ComponentProps<typeof PasswordInput>) => {
   const record = useRecordContext();
   let systemUserIsSelected = false;
@@ -864,17 +892,38 @@ export const UserPasswordInput = (props: React.ComponentProps<typeof PasswordInp
 
   const generatePassword = () => {
     const password = generateRandomPassword();
-    form.setValue("password", password, { shouldDirty: true });
+    form.setValue("password", password, { shouldDirty: true, shouldValidate: true });
   };
 
   // Get the current deactivated state and the original value
   const deactivated = form.watch("deactivated");
   const deactivatedFromRecord = record?.deactivated;
 
-  // Custom validation for reactivation case
-  const validatePasswordOnReactivation = (value: unknown) => {
-    if (deactivatedFromRecord === true && deactivated === false && !GetConfig().externalAuthProvider && !value) {
+  // When the homeserver delegates to MAS, MAS enforces zxcvbn-based password
+  // complexity server-side and rejects weak passwords with HTTP 400. Mirror
+  // that check on the client so the form blocks submission and shows feedback
+  // instead of failing after the round-trip.
+  const useMAS = !!GetConfig().externalAuthProvider;
+  const passwordValue = form.watch(props.source ?? "password");
+  const strength = useMemo(
+    () =>
+      useMAS && typeof passwordValue === "string" && passwordValue.length > 0
+        ? evaluatePasswordStrength(passwordValue)
+        : null,
+    [useMAS, passwordValue]
+  );
+
+  const validatePassword = (value: unknown) => {
+    // Reactivation case: in Synapse-only mode, password is required.
+    if (deactivatedFromRecord === true && deactivated === false && !useMAS && !value) {
       return translate("resources.users.helper.password_required_for_reactivation");
+    }
+    // MAS complexity gate.
+    if (useMAS && typeof value === "string" && value.length > 0) {
+      const result = evaluatePasswordStrength(value);
+      if (result.score < MIN_PASSWORD_SCORE) {
+        return result.warning || result.suggestions[0] || "Password is too weak";
+      }
     }
     return undefined;
   };
@@ -883,7 +932,7 @@ export const UserPasswordInput = (props: React.ComponentProps<typeof PasswordInp
 
   if (systemUserIsSelected) {
     passwordHelperText = "resources.users.helper.modify_managed_user_error";
-  } else if (deactivatedFromRecord === true && deactivated === false && !GetConfig().externalAuthProvider) {
+  } else if (deactivatedFromRecord === true && deactivated === false && !useMAS) {
     passwordHelperText = "resources.users.helper.password_required_for_reactivation";
   } else if (record) {
     passwordHelperText = "resources.users.helper.password";
@@ -893,10 +942,11 @@ export const UserPasswordInput = (props: React.ComponentProps<typeof PasswordInp
     <>
       <PasswordInput
         {...props}
-        validate={validatePasswordOnReactivation}
+        validate={validatePassword}
         helperText={passwordHelperText}
         disabled={systemUserIsSelected}
       />
+      {strength && <PasswordStrengthMeter strength={strength} />}
       <Button
         variant="outlined"
         label="resources.users.action.generate_password"

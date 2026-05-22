@@ -1,4 +1,4 @@
-import { generateDeviceId, generateRandomPassword } from "./password";
+import { evaluatePasswordStrength, generateDeviceId, generateRandomPassword, MIN_PASSWORD_SCORE } from "./password";
 
 const ALLOWED_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz~`!@#$%^&*()_-+={[}]|:;'.?/<>,";
 const ALPHANUMERIC = /^[A-Za-z0-9]+$/;
@@ -41,5 +41,27 @@ describe("generateDeviceId", () => {
     const a = generateDeviceId();
     const b = generateDeviceId();
     expect(a).not.toBe(b);
+  });
+});
+
+describe("evaluatePasswordStrength", () => {
+  it("scores empty string as 0", () => {
+    expect(evaluatePasswordStrength("").score).toBe(0);
+  });
+
+  it("scores common weak passwords below the minimum", () => {
+    expect(evaluatePasswordStrength("password").score).toBeLessThan(MIN_PASSWORD_SCORE);
+    expect(evaluatePasswordStrength("test123").score).toBeLessThan(MIN_PASSWORD_SCORE);
+    expect(evaluatePasswordStrength("qwerty").score).toBeLessThan(MIN_PASSWORD_SCORE);
+  });
+
+  it("scores strong random passwords at or above the minimum", () => {
+    expect(evaluatePasswordStrength(generateRandomPassword(20)).score).toBeGreaterThanOrEqual(MIN_PASSWORD_SCORE);
+  });
+
+  it("returns warning and suggestion fields", () => {
+    const result = evaluatePasswordStrength("password");
+    expect(typeof result.warning).toBe("string");
+    expect(Array.isArray(result.suggestions)).toBe(true);
   });
 });
