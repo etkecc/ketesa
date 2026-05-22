@@ -61,14 +61,25 @@ const MASUserCreate = (props: CreateProps) => {
       }
     }
 
+    let passwordError: string | undefined;
     if (masId && data.password) {
       const result = await dataProvider.masSetPassword(masId, data.password);
       if (!result.success) {
-        notify(result.error || "resources.users.action.password.failure", { type: "warning" });
+        passwordError = result.error;
       }
     }
 
-    notify("ra.notification.created", { messageArgs: { smart_count: 1 } });
+    if (passwordError) {
+      // The user was created in MAS, but the password was rejected (e.g. too weak by policy).
+      // Surface the actual error and skip the success notification so the admin notices and
+      // can set a new password on the user page.
+      notify(passwordError || "resources.users.action.password.failure", {
+        type: "warning",
+        autoHideDuration: 10000,
+      });
+    } else {
+      notify("ra.notification.created", { messageArgs: { smart_count: 1 } });
+    }
     redirect(() => `users/${encodeURIComponent(record.id as string)}`);
   };
 
