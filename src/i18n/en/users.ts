@@ -76,6 +76,8 @@ const users = {
     redact_failure:
       "Redaction completed with %{smart_count} failed event. |||| Redaction completed with %{smart_count} failed events.",
     generate_password: "Generate password",
+    set_password_failure: "Failed to set password",
+    set_admin_failure: "Failed to grant server administrator privileges",
     reset_password: {
       label: "Reset password",
       title: "Reset password",

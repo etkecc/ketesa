@@ -85,6 +85,8 @@ const users = {
     redact_failure:
       "Oscuramento completato con %{smart_count} evento fallito. |||| Oscuramento completato con %{smart_count} eventi falliti.",
     generate_password: "Genera password",
+    set_password_failure: "Impossibile impostare la password",
+    set_admin_failure: "Impossibile concedere i privilegi di amministratore del server",
     reset_password: {
       label: "Reimposta password",
       title: "Reimposta password",

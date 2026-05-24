@@ -213,6 +213,8 @@ export interface SynapseTranslationMessages extends TranslationMessages {
         redact_success: string;
         redact_failure: string;
         generate_password: string;
+        set_password_failure: string;
+        set_admin_failure: string;
         reset_password: {
           label: string;
           title: string;

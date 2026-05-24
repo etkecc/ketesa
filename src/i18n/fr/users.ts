@@ -86,6 +86,8 @@ const users = {
     redact_failure:
       "Expurgation terminée avec %{smart_count} événement échoué. |||| Expurgation terminée avec %{smart_count} événements échoués.",
     generate_password: "Générer un mot de passe",
+    set_password_failure: "Échec de la définition du mot de passe",
+    set_admin_failure: "Échec de l'attribution des privilèges d'administrateur du serveur",
     reset_password: {
       label: "Réinitialiser le mot de passe",
       title: "Réinitialiser le mot de passe",

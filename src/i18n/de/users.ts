@@ -87,6 +87,8 @@ const users = {
     redact_failure:
       "Schwärzung mit %{smart_count} fehlgeschlagenem Ereignis abgeschlossen. |||| Schwärzung mit %{smart_count} fehlgeschlagenen Ereignissen abgeschlossen.",
     generate_password: "Passwort generieren",
+    set_password_failure: "Passwort konnte nicht festgelegt werden",
+    set_admin_failure: "Serveradministratorrechte konnten nicht vergeben werden",
     reset_password: {
       label: "Passwort zurücksetzen",
       title: "Passwort zurücksetzen",

@@ -76,6 +76,8 @@ const users = {
     redact_failure:
       "Redação concluída com %{smart_count} evento com falha. |||| Redação concluída com %{smart_count} eventos com falha.",
     generate_password: "Gerar palavra-passe",
+    set_password_failure: "Falha ao definir a palavra-passe",
+    set_admin_failure: "Falha ao conceder privilégios de administrador do servidor",
     reset_password: {
       label: "Repor palavra-passe",
       title: "Repor palavra-passe",

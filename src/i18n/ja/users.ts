@@ -74,6 +74,8 @@ const users = {
     redact_success: "すべてのイベントを削除しました。",
     redact_failure: "%{smart_count} 件のイベントの削除に失敗しました。",
     generate_password: "パスワードを生成",
+    set_password_failure: "パスワードを設定できませんでした",
+    set_admin_failure: "サーバーの管理者権限を付与できませんでした",
     reset_password: {
       label: "パスワードをリセット",
       title: "パスワードをリセット",

@@ -82,6 +82,8 @@ const users = {
     redact_success: "所有事件已成功删除。",
     redact_failure: "删除完成，但有 %{smart_count} 个事件删除失败。",
     generate_password: "生成密码",
+    set_password_failure: "设置密码失败",
+    set_admin_failure: "授予服务器管理员权限失败",
     reset_password: {
       label: "重置密码",
       title: "重置密码",

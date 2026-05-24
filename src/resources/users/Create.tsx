@@ -52,23 +52,33 @@ const MASUserCreate = (props: CreateProps) => {
     }
 
     const masId = (record as unknown as Record<string, unknown>)?.mas_id as string | undefined;
+    const failures: string[] = [];
 
     if (masId && data.admin) {
       try {
-        await dataProvider.masSetAdmin(masId, true);
-      } catch (e) {
-        console.error("masSetAdmin failed:", e);
+        const result = await dataProvider.masSetAdmin(masId, true);
+        if (!result.success) failures.push(result.error || translate("resources.users.action.set_admin_failure"));
+      } catch {
+        failures.push(translate("resources.users.action.set_admin_failure"));
       }
     }
 
     if (masId && data.password) {
-      const result = await dataProvider.masSetPassword(masId, data.password);
-      if (!result.success) {
-        notify(result.error || "resources.users.action.password.failure", { type: "warning" });
+      try {
+        const result = await dataProvider.masSetPassword(masId, data.password);
+        if (!result.success) failures.push(result.error || translate("resources.users.action.set_password_failure"));
+      } catch {
+        failures.push(translate("resources.users.action.set_password_failure"));
       }
     }
 
-    notify("ra.notification.created", { messageArgs: { smart_count: 1 } });
+    if (failures.length > 0) {
+      notify(failures.join("; "), { type: "error" });
+    } else {
+      notify("ra.notification.created", { messageArgs: { smart_count: 1 } });
+    }
+    // The user exists regardless; redirect to it so a failed admin/password step is fixable
+    // from the edit view rather than rolled back.
     redirect(() => `users/${encodeURIComponent(record.id as string)}`);
   };
 

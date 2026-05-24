@@ -84,6 +84,8 @@ const users = {
     redact_success: "تمام رویدادها با موفقیت حذف شدند.",
     redact_failure: "حذف با %{smart_count} رویداد ناموفق به پایان رسید.",
     generate_password: "تولید رمز عبور",
+    set_password_failure: "تنظیم رمز عبور ناموفق بود",
+    set_admin_failure: "اعطای دسترسی مدیر سرور ناموفق بود",
     reset_password: {
       label: "بازنشانی رمز عبور",
       title: "بازنشانی رمز عبور",

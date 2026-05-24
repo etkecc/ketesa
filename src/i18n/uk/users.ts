@@ -76,6 +76,8 @@ const users = {
     redact_failure:
       "Видалення завершено з %{smart_count} невдалою подією. |||| Видалення завершено з %{smart_count} невдалими подіями.",
     generate_password: "Згенерувати пароль",
+    set_password_failure: "Не вдалося встановити пароль",
+    set_admin_failure: "Не вдалося надати права адміністратора сервера",
     reset_password: {
       label: "Скинути пароль",
       title: "Скинути пароль",
