@@ -112,7 +112,10 @@ export const wrapWithLifecycle = (base: SynapseDataProvider): SynapseDataProvide
         const shadowBanned = params.data.shadow_banned;
         const previousShadowBanned = params.previousData?.shadow_banned;
         const deactivated = params.data.deactivated;
+        const previousDeactivated = params.previousData?.deactivated;
         const erased = params.data.erased;
+        const previousErased = params.previousData?.erased;
+
 
         if (rates) {
           await dataProvider.setRateLimits(params.id, rates);
@@ -129,7 +132,11 @@ export const wrapWithLifecycle = (base: SynapseDataProvider): SynapseDataProvide
           delete params.data.shadow_banned;
         }
 
-        if (deactivated !== undefined && erased !== undefined) {
+        if (
+          deactivated === true &&
+          erased === true &&
+          (deactivated !== previousDeactivated || erased !== previousErased)
+        ) {
           await (dataProvider as SynapseDataProvider).eraseUser(params.id);
           delete params.data.deactivated;
           delete params.data.erased;
