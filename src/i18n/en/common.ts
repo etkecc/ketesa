@@ -15,8 +15,16 @@ const common = {
       protocol_error: "URL has to start with 'http://' or 'https://'",
       url_error: "Not a valid Matrix server URL",
       sso_sign_in: "Sign in with SSO",
+      oidc_sign_in: "Sign in with OIDC",
       credentials: "Credentials",
       access_token: "Access token",
+      server_state: {
+        resolving: "Checking server capabilities…",
+        unreachable: "Couldn't reach this server. Check the URL and try again.",
+        incompatible: "This server advertises sign-in methods Ketesa doesn't support: %{flows}",
+        suppress_password_notice: "This server requires the OAuth flow — password sign-in isn't available.",
+        checking: "Checking server…",
+      },
       logout_access_token_dialog: {
         title: "You are using an existing Matrix access token.",
         content:

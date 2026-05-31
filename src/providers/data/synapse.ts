@@ -25,8 +25,11 @@ import { normalizeTS } from "../../utils/date";
 /**
  * Get Synapse server version via /_synapse/admin/v1/server_version
  */
-export const getServerVersion = async (baseUrl: string): Promise<string> => {
-  const response = await fetchUtils.fetchJson(`${baseUrl}/_synapse/admin/v1/server_version`, { method: "GET" });
+export const getServerVersion = async (baseUrl: string, signal?: AbortSignal): Promise<string> => {
+  const response = await fetchUtils.fetchJson(`${baseUrl}/_synapse/admin/v1/server_version`, {
+    method: "GET",
+    signal,
+  });
   return response.json.server_version;
 };
 

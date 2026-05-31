@@ -15,8 +15,16 @@ const common: Record<string, any> = {
       protocol_error: "URL повинен починатися з 'http://' або 'https://'",
       url_error: "Недійсна URL-адреса сервера Matrix",
       sso_sign_in: "Вхід через SSO",
+      oidc_sign_in: "Вхід через OIDC",
       credentials: "Облікові дані",
       access_token: "Токен доступу",
+      server_state: {
+        resolving: "Перевірка можливостей сервера…",
+        unreachable: "Не вдалося зʼєднатися з цим сервером. Перевірте URL і спробуйте ще раз.",
+        incompatible: "Цей сервер пропонує методи входу, які Ketesa не підтримує: %{flows}",
+        suppress_password_notice: "Цей сервер вимагає потоку OAuth — вхід за паролем недоступний.",
+        checking: "Перевірка сервера…",
+      },
       logout_access_token_dialog: {
         title: "Ви використовуєте існуючий токен доступу Matrix.",
         content:

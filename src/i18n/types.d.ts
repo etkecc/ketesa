@@ -12,8 +12,16 @@ export interface SynapseTranslationMessages extends TranslationMessages {
       protocol_error: string;
       url_error: string;
       sso_sign_in: string;
+      oidc_sign_in: string;
       credentials: string;
       access_token: string;
+      server_state: {
+        resolving: string;
+        unreachable: string;
+        incompatible: string;
+        suppress_password_notice: string;
+        checking: string;
+      };
       logout_access_token_dialog: {
         title: string;
         content: string;

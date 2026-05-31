@@ -35,7 +35,7 @@ import { useMatch } from "react-router-dom";
 import { setDataProviderNotifier } from "../../providers/data";
 import { AdminClientConfigItems } from "../users/AdminClientConfigItems";
 import Footer from "./Footer";
-import { LoginMethod } from "../../pages/LoginPage";
+import { LoginMethod } from "../../components/login/types";
 import { ServerProcessResponse, ServerStatusResponse } from "../../providers/types";
 import { useServerVersions } from "../../providers/serverVersion";
 import { ClearConfig } from "../../utils/config";

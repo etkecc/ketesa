@@ -14,8 +14,16 @@ const common: Record<string, any> = {
       protocol_error: "URL باید با 'http://' یا 'https://' شروع شود",
       url_error: "آدرس وارد شده یک سرور معتبر نیست",
       sso_sign_in: "با SSO وارد شوید",
+      oidc_sign_in: "با OIDC وارد شوید",
       credentials: "اعتبارنامه",
       access_token: "توکن دسترسی",
+      server_state: {
+        resolving: "در حال بررسی قابلیت‌های سرور…",
+        unreachable: "امکان دسترسی به این سرور وجود ندارد. URL را بررسی کنید و دوباره تلاش کنید.",
+        incompatible: "این سرور روش‌های ورودی را اعلام می‌کند که Ketesa پشتیبانی نمی‌کند: %{flows}",
+        suppress_password_notice: "این سرور نیازمند فرایند OAuth است — ورود با رمز عبور در دسترس نیست.",
+        checking: "در حال بررسی سرور…",
+      },
       supports_specs: "پشتیبانی از مشخصات Matrix",
       logout_access_token_dialog: {
         title: "شما در حال استفاده از یک توکن دسترسی موجود Matrix هستید.",

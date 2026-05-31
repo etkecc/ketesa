@@ -14,8 +14,16 @@ const common: Record<string, any> = {
       protocol_error: "URL 需要以'http://'或'https://'作为起始",
       url_error: "不是一个有效的 Matrix 服务器地址",
       sso_sign_in: "使用 SSO 登录",
+      oidc_sign_in: "使用 OIDC 登录",
       credentials: "凭证",
       access_token: "访问令牌",
+      server_state: {
+        resolving: "正在检查服务器功能…",
+        unreachable: "无法连接到此服务器。请检查 URL 后重试。",
+        incompatible: "此服务器公布了 Ketesa 不支持的登录方式：%{flows}",
+        suppress_password_notice: "此服务器需要使用 OAuth 流程登录，密码登录不可用。",
+        checking: "正在检查服务器…",
+      },
       supports_specs: "支持 Matrix 规范",
       logout_access_token_dialog: {
         title: "您正在使用现有的 Matrix 访问令牌。",

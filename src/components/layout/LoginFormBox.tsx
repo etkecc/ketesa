@@ -142,10 +142,18 @@ const LoginFormBox = styled(Box, {
         marginBottom: "2rem",
       },
     },
+    // Reserve the logo's footprint and centre vertically, so swapping to the
+    // (much smaller) loading spinner on submit doesn't collapse the avatar row
+    // and jump the whole card upward.
     [`& .avatar`]: {
       margin: "1.5rem 1rem 1rem",
       display: "flex",
       justifyContent: "center",
+      alignItems: "center",
+      minHeight: "80px",
+      [theme.breakpoints.up("sm")]: {
+        minHeight: "120px",
+      },
     },
     [`& .icon`]: {
       backgroundColor: theme.palette.grey[500],
@@ -162,8 +170,24 @@ const LoginFormBox = styled(Box, {
     [`& .form`]: {
       padding: "0 1.5rem 1.5rem 1.5rem",
     },
+    // Buttons live inside .form (which already supplies the 1.5rem horizontal
+    // padding), so .actions adds none of its own — otherwise the buttons sit
+    // inset from the inputs above them and the column looks misaligned.
     [`& .actions`]: {
-      padding: "0 1.5rem 1.5rem 1.5rem",
+      padding: 0,
+      marginTop: "0.5rem",
+    },
+    // Probe status line (resolving / unreachable / incompatible / suppress).
+    // Colour is set per-message on the Typography (error vs secondary), so it is
+    // deliberately omitted here to avoid overriding the error variants.
+    [`& .serverState`]: {
+      fontSize: "0.85rem",
+      marginLeft: "0.5rem",
+      // Padding, not margin: it stays inside the Collapse's measured height box,
+      // so the status line animates in/out cleanly instead of snapping at the
+      // first frame of the transition.
+      paddingTop: "0.25rem",
+      paddingBottom: "0.75rem",
     },
     [`& .serverVersion`]: {
       color: theme.palette.text.secondary,

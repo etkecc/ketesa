@@ -22,7 +22,7 @@ export const isValidBaseUrl = (baseUrl: unknown): boolean =>
  * Resolve a base URL using /.well-known/matrix/client if present.
  * Falls back to the provided URL if lookup fails or is invalid.
  */
-export const resolveBaseUrlWithWellKnown = async (baseUrl: string): Promise<string> => {
+export const resolveBaseUrlWithWellKnown = async (baseUrl: string, signal?: AbortSignal): Promise<string> => {
   if (!baseUrl) return baseUrl;
   const cleaned = baseUrl.replace(/\/+$/g, "");
   let origin: string;
@@ -34,7 +34,7 @@ export const resolveBaseUrlWithWellKnown = async (baseUrl: string): Promise<stri
 
   const wellKnownUrl = `${origin}/.well-known/matrix/client`;
   try {
-    const response = await fetchUtils.fetchJson(wellKnownUrl, { method: "GET" });
+    const response = await fetchUtils.fetchJson(wellKnownUrl, { method: "GET", signal });
     const wkBaseUrl = response.json?.["m.homeserver"]?.base_url;
     if (typeof wkBaseUrl === "string" && wkBaseUrl.trim() !== "") {
       const resolved = wkBaseUrl.replace(/\/+$/g, "");
@@ -53,10 +53,10 @@ export const resolveBaseUrlWithWellKnown = async (baseUrl: string): Promise<stri
  * @param domain  the domain part of an MXID
  * @returns homeserver base URL
  */
-export const getWellKnownUrl = async (domain: string) => {
+export const getWellKnownUrl = async (domain: string, signal?: AbortSignal) => {
   const wellKnownUrl = `https://${domain}/.well-known/matrix/client`;
   try {
-    const response = await fetchUtils.fetchJson(wellKnownUrl, { method: "GET" });
+    const response = await fetchUtils.fetchJson(wellKnownUrl, { method: "GET", signal });
     return response.json["m.homeserver"].base_url;
   } catch {
     // if there is no .well-known entry, return the domain itself
@@ -65,9 +65,9 @@ export const getWellKnownUrl = async (domain: string) => {
 };
 
 /** Get supported Matrix features */
-export const getSupportedFeatures = async (baseUrl: string) => {
+export const getSupportedFeatures = async (baseUrl: string, signal?: AbortSignal) => {
   const versionUrl = `${baseUrl}/_matrix/client/versions`;
-  const response = await fetchUtils.fetchJson(versionUrl, { method: "GET" });
+  const response = await fetchUtils.fetchJson(versionUrl, { method: "GET", signal });
   return response.json;
 };
 
@@ -76,20 +76,20 @@ export const getSupportedFeatures = async (baseUrl: string) => {
  * @param baseUrl  the base URL of the homeserver
  * @returns array of supported login flows
  */
-export const getSupportedLoginFlows = async (baseUrl: string) => {
+export const getSupportedLoginFlows = async (baseUrl: string, signal?: AbortSignal) => {
   const loginFlowsUrl = `${baseUrl}/_matrix/client/v3/login`;
-  const response = await fetchUtils.fetchJson(loginFlowsUrl, { method: "GET" });
+  const response = await fetchUtils.fetchJson(loginFlowsUrl, { method: "GET", signal });
   return response.json.flows;
 };
 
-export const getAuthMetadata = async (baseUrl: string): Promise<AuthMetadata | null> => {
+export const getAuthMetadata = async (baseUrl: string, signal?: AbortSignal): Promise<AuthMetadata | null> => {
   const endpoints = [
     `${baseUrl}/_matrix/client/v1/auth_metadata`, // stable (Matrix spec v1.14+)
     `${baseUrl}/_matrix/client/unstable/org.matrix.msc2965/auth_metadata`, // legacy unstable fallback
   ];
   for (const url of endpoints) {
     try {
-      const response = await fetchUtils.fetchJson(url, { method: "GET" });
+      const response = await fetchUtils.fetchJson(url, { method: "GET", signal });
       if (response.status === 200 && response.json?.issuer) {
         return response.json;
       }

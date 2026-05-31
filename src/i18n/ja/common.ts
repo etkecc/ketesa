@@ -15,8 +15,17 @@ const common: Record<string, any> = {
       protocol_error: "URLの先頭には「http://」または「https://」を置いてください",
       url_error: "正しいMatrixのサーバーのURLではありません",
       sso_sign_in: "シングルサインオン",
+      oidc_sign_in: "OIDCでサインイン",
       credentials: "認証情報",
       access_token: "アクセストークン",
+      server_state: {
+        resolving: "サーバーの機能を確認しています…",
+        unreachable: "このサーバーに接続できませんでした。URLを確認してもう一度お試しください。",
+        incompatible: "このサーバーは、Ketesaが対応していないサインイン方式を提供しています: %{flows}",
+        suppress_password_notice:
+          "このサーバーはOAuthフローが必要なため、パスワードでのサインインはご利用いただけません。",
+        checking: "サーバーを確認しています…",
+      },
       logout_access_token_dialog: {
         title: "既存のMatrixアクセストークンが使われています。",
         content:

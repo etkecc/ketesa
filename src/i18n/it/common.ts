@@ -13,9 +13,17 @@ const common: Record<string, any> = {
       username_error: "Per favore inserisca un ID utente completo: '@utente:dominio'",
       protocol_error: "L'URL deve iniziare per 'http://' o 'https://'",
       url_error: "URL del server Matrix non valido",
-      sso_sign_in: "Accedi con SSO",
+      sso_sign_in: "Acceda con SSO",
+      oidc_sign_in: "Acceda con OIDC",
       credentials: "Credenziali",
       access_token: "Token di accesso",
+      server_state: {
+        resolving: "Verifica delle funzionalità del server in corso…",
+        unreachable: "Impossibile raggiungere questo server. Verifichi l'URL e riprovi.",
+        incompatible: "Questo server pubblicizza metodi di accesso non supportati da Ketesa: %{flows}",
+        suppress_password_notice: "Questo server richiede il flusso OAuth — l'accesso con password non è disponibile.",
+        checking: "Verifica del server in corso…",
+      },
       supports_specs: "supporta le specifiche Matrix",
       logout_access_token_dialog: {
         title: "Sta utilizzando un token di accesso Matrix esistente.",
