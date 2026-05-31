@@ -71,6 +71,7 @@ export const synapseResourceMap = {
       is_guest: !!u.is_guest,
       admin: !!u.admin,
       deactivated: !!u.deactivated,
+      erased: !!u.erased,
       shadow_banned: !!u.shadow_banned,
       // Normalize across Synapse user endpoints before the value reaches the UI.
       creation_ts_ms: normalizeTS(u.creation_ts),

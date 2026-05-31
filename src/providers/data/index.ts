@@ -576,6 +576,12 @@ const baseDataProvider: SynapseDataProvider = {
 
   update: async (resource, params) => {
     log.debug("update", resource, params.id);
+    // Erase is terminal: the lifecycle beforeUpdate already deactivated + GDPR-erased the user and
+    // set this flag. Skip the profile PUT (PUT /v2/users would recreate the just-erased profile)
+    // and echo back the erased record.
+    if (resource === "users" && params.meta?.userErased) {
+      return { data: { ...params.previousData, ...params.data, id: params.id, deactivated: true, erased: true } };
+    }
     const { res, baseUrl } = resolveResource(resource);
     const endpoint_url = baseUrl + res.path;
 

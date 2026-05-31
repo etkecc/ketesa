@@ -43,7 +43,7 @@ const makeBase = (): MockBase => ({
   shadowBanUser: vi.fn().mockResolvedValue({}),
   uploadMedia: vi.fn().mockResolvedValue({ content_uri: "mxc://h/m" }),
   setRateLimits: vi.fn().mockResolvedValue({}),
-  eraseUser: vi.fn().mockResolvedValue({}),
+  eraseUser: vi.fn().mockResolvedValue({ success: true }),
   update: vi.fn().mockResolvedValue({ data: { id: "@u:hs" } }),
 });
 
@@ -362,5 +362,94 @@ describe("getMASUsersAsMainResource.delete", () => {
     expect(calls[0].url).toBe(calls[1].url);
     expect(calls[0].method).toBe("PUT");
     expect(JSON.parse(calls[0].body || "{}")).toEqual({ deactivated: true });
+  });
+});
+
+describe("lifecycle.beforeUpdate — Synapse-only mode, erase guard", () => {
+  // Regression for the catastrophic bug: deactivated + erased are present on every user record,
+  // so the old `!== undefined` guard fired eraseUser on every save. The guard must only fire when
+  // both flags are explicitly true AND actually changed.
+  it("does NOT erase on a routine edit (displayname change, deactivated/erased unchanged)", async () => {
+    const base = makeBase();
+    const wrap = wrapWithLifecycle(base as any);
+
+    await wrap.update("users", {
+      id: "@bob:hs",
+      previousData: { id: "@bob:hs", displayname: "Bob", deactivated: false, erased: false },
+      data: { id: "@bob:hs", displayname: "Bobby", deactivated: false, erased: false },
+    });
+
+    expect(base.eraseUser).not.toHaveBeenCalled();
+    // The profile PUT proceeds normally — no skip signal set.
+    expect(base.update).toHaveBeenCalledTimes(1);
+    expect(base.update.mock.calls[0][1].meta?.userErased).toBeFalsy();
+  });
+
+  it("does NOT erase when only deactivating (deactivated true, erased false) — deactivate flows to the PUT", async () => {
+    const base = makeBase();
+    const wrap = wrapWithLifecycle(base as any);
+
+    await wrap.update("users", {
+      id: "@bob:hs",
+      previousData: { id: "@bob:hs", deactivated: false, erased: false },
+      data: { id: "@bob:hs", deactivated: true, erased: false },
+    });
+
+    expect(base.eraseUser).not.toHaveBeenCalled();
+    // deactivated stays in data so the base PUT carries it (plain deactivate, no erase).
+    expect(base.update.mock.calls[0][1].data.deactivated).toBe(true);
+  });
+
+  it("erases exactly once when the operator sets deactivated+erased (false → true), then signals skip", async () => {
+    const base = makeBase();
+    const wrap = wrapWithLifecycle(base as any);
+
+    await wrap.update("users", {
+      id: "@bob:hs",
+      previousData: { id: "@bob:hs", deactivated: false, erased: false },
+      data: { id: "@bob:hs", deactivated: true, erased: true },
+    });
+
+    expect(base.eraseUser).toHaveBeenCalledTimes(1);
+    expect(base.eraseUser).toHaveBeenCalledWith("@bob:hs");
+    // beforeUpdate can't cancel the base update; it signals it to skip the doomed PUT instead.
+    expect(base.update.mock.calls[0][1].meta.userErased).toBe(true);
+  });
+
+  it("idempotency: erase fires exactly once across two sequential saves (second sees already-erased state)", async () => {
+    const base = makeBase();
+    const wrap = wrapWithLifecycle(base as any);
+
+    // First save: operator deactivates + erases.
+    await wrap.update("users", {
+      id: "@bob:hs",
+      previousData: { id: "@bob:hs", deactivated: false, erased: false },
+      data: { id: "@bob:hs", deactivated: true, erased: true },
+    });
+    // Second save: the record is now erased; RA's previousData reflects it, so no re-fire.
+    await wrap.update("users", {
+      id: "@bob:hs",
+      previousData: { id: "@bob:hs", deactivated: true, erased: true },
+      data: { id: "@bob:hs", deactivated: true, erased: true, displayname: "x" },
+    });
+
+    expect(base.eraseUser).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects without faking success when eraseUser reports failure, and skips the PUT", async () => {
+    const base = makeBase();
+    base.eraseUser.mockResolvedValueOnce({ success: false, error: "boom" });
+    const wrap = wrapWithLifecycle(base as any);
+
+    await expect(
+      wrap.update("users", {
+        id: "@bob:hs",
+        previousData: { id: "@bob:hs", deactivated: false, erased: false },
+        data: { id: "@bob:hs", deactivated: true, erased: true },
+      })
+    ).rejects.toThrow("boom");
+
+    // The erase failed → the account still exists → we must not silently proceed.
+    expect(base.update).not.toHaveBeenCalled();
   });
 });

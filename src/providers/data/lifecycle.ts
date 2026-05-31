@@ -116,7 +116,6 @@ export const wrapWithLifecycle = (base: SynapseDataProvider): SynapseDataProvide
         const erased = params.data.erased;
         const previousErased = params.previousData?.erased;
 
-
         if (rates) {
           await dataProvider.setRateLimits(params.id, rates);
           delete params.data.rates;
@@ -137,9 +136,18 @@ export const wrapWithLifecycle = (base: SynapseDataProvider): SynapseDataProvide
           erased === true &&
           (deactivated !== previousDeactivated || erased !== previousErased)
         ) {
-          await (dataProvider as SynapseDataProvider).eraseUser(params.id);
-          delete params.data.deactivated;
-          delete params.data.erased;
+          const result = await (dataProvider as SynapseDataProvider).eraseUser(params.id);
+          if (!result.success) {
+            return Promise.reject(new Error(result.error || "Failed to erase user"));
+          }
+          // Erase is terminal for this save: skip the follow-up profile PUT. PUT /v2/users is
+          // create-or-recreate, so letting it run would recreate the profile we just erased.
+          // Re-editing an already-erased user does not re-enter this branch (the change check above
+          // is false when both flags are unchanged), so recreating an erased user via a normal edit
+          // still works. Note: returning here exits beforeUpdate only — react-admin still runs any
+          // registered beforeSave on params.data; there is none on "users" today, keep it that way.
+          params.meta = { ...params.meta, userErased: true };
+          return params;
         }
 
         if (avatarErase) {

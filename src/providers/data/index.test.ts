@@ -403,4 +403,19 @@ describe("dataProvider", () => {
     expect(vi.mocked(fetch).mock.calls[0]?.[0]).toContain("from=0");
     expect(vi.mocked(fetch).mock.calls[1]?.[0]).toContain("from=250");
   });
+
+  it("update skips the profile PUT when the user was erased (meta.userErased)", async () => {
+    const result = await dataProvider.update("users", {
+      id: "@bob:hs",
+      previousData: { id: "@bob:hs", deactivated: false, erased: false },
+      data: { id: "@bob:hs", deactivated: false, erased: false, displayname: "x" },
+      meta: { userErased: true },
+    });
+
+    // No HTTP request fired — the erased account would have returned M_UNKNOWN.
+    expect(fetch).not.toHaveBeenCalled();
+    expect(result.data.id).toBe("@bob:hs");
+    expect(result.data.deactivated).toBe(true);
+    expect(result.data.erased).toBe(true);
+  });
 });
