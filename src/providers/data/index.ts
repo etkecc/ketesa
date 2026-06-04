@@ -287,7 +287,7 @@ const baseDataProvider: SynapseDataProvider = {
 
     // Allow resource to override getList entirely (e.g. MAS users Synapse-first sort)
     // Skip when reverse search or system_users scan is active — handled below for both modes.
-    if (!isReverseSearch && !system_users && res.getList) {
+    if (!isReverseSearch && system_users == null && res.getList) {
       const result = await res.getList({
         pagination: params.pagination as PaginationPayload,
         sort: params.sort as SortPayload,
