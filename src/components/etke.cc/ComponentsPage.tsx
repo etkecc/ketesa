@@ -94,7 +94,7 @@ const ComponentsPage = () => {
     ...noSectionItems.filter(c => c.enabled && toggledOff.has(c.id)),
     ...allSectionItems.filter(c => c.enabled && toggledOff.has(c.id)),
   ];
-  // Only sections with a package price count as "activating" — toggling an item inside a
+  // Only sections with a package price count as "activating"; toggling an item inside a
   // free section (price === 0) does not trigger a section charge.
   const activatedSections = sections.filter(
     s => !s.enabled && s.price > 0 && s.components.some(c => toggledOn.has(c.id))

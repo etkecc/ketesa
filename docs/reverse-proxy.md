@@ -1,19 +1,19 @@
-# 🌐 Serving Ketesa behind a reverse proxy
+# Serving Ketesa behind a reverse proxy
 
-Running Ketesa behind a reverse proxy is the recommended approach for any internet-facing deployment. Here you'll find ready-to-use configurations for the most common setups.
+Running Ketesa behind a reverse proxy is the recommended setup for any internet-facing deployment. Below are ready-to-use configs for the common ones.
 
-**Pick the right build for your path:**
+Before you copy a config, pick the build that matches your path. The choice of build, tarball, and Docker tag all follow from whether you serve Ketesa at the root of a domain or under a subpath:
 
 | Deployment path | Tarball | Docker tag |
 |----------------|---------|------------|
-| Root path — `https://admin.example.com` | `ketesa.tar.gz` / `dist-root` | `latest` |
-| Subpath — `https://example.com/admin` | `ketesa-subpath-admin.tar.gz` / `dist-subpath-admin` | `latest-subpath-admin` |
+| Root path (`https://admin.example.com`) | `ketesa.tar.gz` / `dist-root` | `latest` |
+| Subpath (`https://example.com/admin`) | `ketesa-subpath-admin.tar.gz` / `dist-subpath-admin` | `latest-subpath-admin` |
 
 Downloads: [GitHub Releases](https://github.com/etkecc/ketesa/releases) · [GitHub Actions artifacts](https://github.com/etkecc/ketesa/actions/workflows/workflow.yml)
 
-## 🟢 Nginx
+## Nginx
 
-### 📦 Prebuilt tarball
+### Prebuilt tarball
 
 #### Root path
 
@@ -69,7 +69,7 @@ server {
 }
 ```
 
-### 🐳 Docker
+### Docker
 
 The following snippets assume the nginx docker container is used and it is in the same network as Ketesa docker container.
 
@@ -119,13 +119,11 @@ server {
 }
 ```
 
-After you've done that, ensure that the configuration is correct by running `nginx -t` and then reload Nginx
-(e.g. `systemctl reload nginx`).
+After you've done that, check the config with `nginx -t` and reload Nginx (e.g. `systemctl reload nginx`).
 
-> ⚠️ **Warning:** This configuration doesn't cover HTTPS, which is highly recommended to use. You can find more information
-about setting up HTTPS in the [Nginx documentation](https://nginx.org/en/docs/http/configuring_https_servers.html).
+> **Note:** none of these configs cover HTTPS, which you really should be running. See the [Nginx HTTPS guide](https://nginx.org/en/docs/http/configuring_https_servers.html) for that.
 
-## 🔀 Traefik (docker labels)
+## Traefik (docker labels)
 
 If you are using Traefik as a reverse proxy, you can use the following labels, `docker-compose.yml` example:
 
@@ -139,6 +137,6 @@ services:
       - "traefik.http.routers.ketesa.rule=Host(`example.com`)"
 ```
 
-## 🔧 Other reverse proxies
+## Other reverse proxies
 
-There are no examples for other reverse proxies yet, and PRs are greatly appreciated.
+No examples for other reverse proxies yet. If you run one, a PR adding its config is welcome.

@@ -262,7 +262,7 @@ describe("getMASNextPageCursor", () => {
       links: { next: "not a valid url" },
       data: [{ id: "item-1", meta: { page: { cursor: "cursor-x" } } }],
     });
-    // URL is malformed but "not a valid url" doesn't have page[after] param — falls through to item cursor
+    // URL is malformed but "not a valid url" doesn't have page[after] param; falls through to item cursor
     expect(result).toBe("cursor-x");
   });
 });

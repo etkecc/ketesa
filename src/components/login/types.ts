@@ -35,7 +35,7 @@ export interface ServerCapabilities {
  * AbortController, not here.
  *
  * incompatible is distinct from unreachable: the server answered cleanly but
- * advertises only auth methods Ketesa cannot drive — advertisedFlows carries
+ * advertises only auth methods Ketesa cannot drive; advertisedFlows carries
  * them so the error copy can name them.
  */
 export type ProbeState =

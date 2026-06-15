@@ -241,7 +241,7 @@ export interface MASUserSessionListResponse {
 
 export interface MASPolicyDataAttributes {
   created_at: string;
-  data: unknown; // free-form JSON — operator-defined OPA data document
+  data: unknown; // free-form JSON; operator-defined OPA data document
 }
 
 export interface MASPolicyDataResource {

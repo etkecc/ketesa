@@ -106,7 +106,6 @@ const common: Record<string, any> = {
         all_passwords_present: "Пароль присутній у кожному записі",
         count_passwords_present:
           "%{smart_count} запис з паролем |||| %{smart_count} записи з паролями |||| %{smart_count} записів з паролями",
-        use_passwords: "Використовувати паролі з CSV",
       },
       upload: {
         header: "Завантажити CSV-файл",
@@ -123,8 +122,6 @@ const common: Record<string, any> = {
         successful: "%{smart_count} записів успішно імпортовано",
         skipped: "%{smart_count} записів пропущено",
         download_skipped: "Завантажити пропущені записи",
-        with_error:
-          "%{smart_count} запис з помилками |||| %{smart_count} записи з помилками |||| %{smart_count} записів з помилками",
         simulated_only: "Запуск був лише симульованим",
       },
     },

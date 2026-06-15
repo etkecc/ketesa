@@ -1,26 +1,25 @@
-# 🔌 Supported APIs
+# Supported APIs
 
 Ketesa uses various APIs to manage Matrix homeservers and related services.
 This document lists all supported APIs and their implementation status.
 
-> 📝 **Note:** This file was compiled based on Synapse **v1.151.0** and MAS **v1.15.0** documentation.
-> It is not updated often and is provided just for reference purposes.
+> **Note:** compiled against Synapse **v1.151.0** and MAS **v1.15.0**. It isn't updated every release, so file a PR if an endpoint here is wrong or has moved.
 
 **Legend:** ✅ fully implemented · 🟡 in progress · ❌ not implemented · ⏭️ superseded (newer version available)
 
 ---
 
-## ✅ Synapse Admin API
+## Synapse Admin API
 
 [Synapse Admin API documentation →](https://element-hq.github.io/synapse/latest/usage/administration/admin_api/index.html)
 
-### ✅ Server Version
+### Server Version
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/_synapse/admin/v1/server_version` | GET | Get running Synapse version | ✅ |
 
-### ✅ Users
+### Users
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -55,7 +54,7 @@ This document lists all supported APIs and their implementation status.
 | `/_synapse/admin/v1/user/<user_id>/redact` | POST | Redact all events from a user | ✅ |
 | `/_synapse/admin/v1/user/redact_status/<redact_id>` | GET | Check user redaction status | ✅ |
 
-### ✅ User Devices
+### User Devices
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -66,7 +65,7 @@ This document lists all supported APIs and their implementation status.
 | `/_synapse/admin/v2/users/<user_id>/devices/<device_id>` | DELETE | Delete a device | ✅ |
 | `/_synapse/admin/v2/users/<user_id>/delete_devices` | POST | Delete multiple devices | ✅ |
 
-### ✅ Rooms
+### Rooms
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -88,7 +87,7 @@ This document lists all supported APIs and their implementation status.
 | `/_synapse/admin/v1/rooms/<room_id_or_alias>/forward_extremities` | GET | Check forward extremities | ✅ |
 | `/_synapse/admin/v1/rooms/<room_id_or_alias>/forward_extremities` | DELETE | Delete forward extremities | ✅ |
 
-### ✅ Registration Tokens
+### Registration Tokens
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -98,7 +97,7 @@ This document lists all supported APIs and their implementation status.
 | `/_synapse/admin/v1/registration_tokens/<token>` | PUT | Update a registration token | ✅ |
 | `/_synapse/admin/v1/registration_tokens/<token>` | DELETE | Delete a registration token | ✅ |
 
-### ✅ Media
+### Media
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -116,7 +115,7 @@ This document lists all supported APIs and their implementation status.
 | `/_synapse/admin/v1/media/protect/<media_id>` | POST | Protect media from quarantine | ✅ |
 | `/_synapse/admin/v1/media/unprotect/<media_id>` | POST | Unprotect media from quarantine | ✅ |
 
-### ✅ Event Reports
+### Event Reports
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -124,14 +123,14 @@ This document lists all supported APIs and their implementation status.
 | `/_synapse/admin/v1/event_reports/<report_id>` | GET | Get specific event report details | ✅ |
 | `/_synapse/admin/v1/event_reports/<report_id>` | DELETE | Delete a specific event report | ✅ |
 
-### ✅ Server Notices
+### Server Notices
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/_synapse/admin/v1/send_server_notice` | POST | Send a server notice to a user | ✅ |
 | `/_synapse/admin/v1/send_server_notice/{txnId}` | PUT | Send server notice with transaction ID | ⏭️ |
 
-### ✅ Federation
+### Federation
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -140,61 +139,61 @@ This document lists all supported APIs and their implementation status.
 | `/_synapse/admin/v1/federation/destinations/<destination>/rooms` | GET | List rooms for destination | ✅ |
 | `/_synapse/admin/v1/federation/destinations/<destination>/reset_connection` | POST | Reset federation connection | ✅ |
 
-### ✅ Experimental Features
+### Experimental Features
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/_synapse/admin/v1/experimental_features/<user_id>` | GET | List experimental features for user | ✅ |
 | `/_synapse/admin/v1/experimental_features/<user_id>` | PUT | Enable/disable experimental features | ✅ |
 
-### ✅ Statistics
+### Statistics
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/_synapse/admin/v1/statistics/users/media` | GET | Get users' media usage statistics | ✅ |
 | `/_synapse/admin/v1/statistics/database/rooms` | GET | Get largest rooms by database size | ✅ |
 
-### ✅ Account Validity
+### Account Validity
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/_synapse/admin/v1/account_validity/validity` | POST | Renew account validity | ✅ |
 
-### ✅ Purge History
+### Purge History
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/_synapse/admin/v1/purge_history/<room_id>[/<event_id>]` | POST | Purge room history | ✅ |
 | `/_synapse/admin/v1/purge_history_status/<purge_id>` | GET | Query purge status | ✅ |
 
-### ✅ Fetch Event
+### Fetch Event
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/_synapse/admin/v1/fetch_event/<event_id>` | GET | Fetch event by ID | ✅ |
 
-### ⏭️ Register (Shared-Secret Registration) — superseded
+### Register (Shared-Secret Registration): superseded
 
-Superseded: redundant with existing user creation via User Admin API (already implemented). Shared-secret registration is designed for CLI bootstrapping without an admin token — pointless when already authenticated in Ketesa.
+Superseded: redundant with existing user creation via the User Admin API (already implemented). Shared-secret registration is built for CLI bootstrapping without an admin token, which is pointless once you're already authenticated in Ketesa.
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/_synapse/admin/v1/register` | GET | Get registration nonce | ⏭️ |
 | `/_synapse/admin/v1/register` | POST | Create user via shared-secret | ⏭️ |
 
-### ✅ Room Membership
+### Room Membership
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/_synapse/admin/v1/join/<room_id_or_alias>` | POST | Join a user to a room | ✅ |
 
-### ✅ Scheduled Tasks
+### Scheduled Tasks
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/_synapse/admin/v1/scheduled_tasks` | GET | Show scheduled tasks | ✅ |
 
-### ✅ Client-Server API Extensions
+### Client-Server API Extensions
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -203,24 +202,24 @@ Superseded: redundant with existing user creation via User Admin API (already im
 
 ---
 
-## ✅ Matrix Authentication Service (MAS) Admin API
+## Matrix Authentication Service (MAS) Admin API
 
 [MAS Admin API specification →](https://element-hq.github.io/matrix-authentication-service/api/spec.json)
 
-### ✅ OAuth 2.0
+### OAuth 2.0
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/oauth2/token` | POST | Refresh access token | ✅ |
 
-### ✅ Server
+### Server
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/api/admin/v1/site-config` | GET | Retrieve instance configuration | ✅ |
 | `/api/admin/v1/version` | GET | Retrieve the currently running version | ✅ |
 
-### ✅ Registration Tokens
+### Registration Tokens
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -231,7 +230,7 @@ Superseded: redundant with existing user creation via User Admin API (already im
 | `/api/admin/v1/user-registration-tokens/{id}/revoke` | POST | Revoke a registration token | ✅ |
 | `/api/admin/v1/user-registration-tokens/{id}/unrevoke` | POST | Unrevoke a registration token | ✅ |
 
-### ✅ Users
+### Users
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -246,7 +245,7 @@ Superseded: redundant with existing user creation via User Admin API (already im
 | `/api/admin/v1/users/{id}/lock` | POST | Lock user | ✅ |
 | `/api/admin/v1/users/{id}/unlock` | POST | Unlock user | ✅ |
 
-### ✅ User Emails
+### User Emails
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -255,7 +254,7 @@ Superseded: redundant with existing user creation via User Admin API (already im
 | `/api/admin/v1/user-emails/{id}` | GET | Get email details | ✅ |
 | `/api/admin/v1/user-emails/{id}` | DELETE | Remove email from user | ✅ |
 
-### ✅ Compat Sessions
+### Compat Sessions
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -263,7 +262,7 @@ Superseded: redundant with existing user creation via User Admin API (already im
 | `/api/admin/v1/compat-sessions/{id}` | GET | Get a compatibility session | ✅ |
 | `/api/admin/v1/compat-sessions/{id}/finish` | POST | Terminate a compatibility session | ✅ |
 
-### ✅ OAuth 2.0 Sessions
+### OAuth 2.0 Sessions
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -271,7 +270,7 @@ Superseded: redundant with existing user creation via User Admin API (already im
 | `/api/admin/v1/oauth2-sessions/{id}` | GET | Get an OAuth 2.0 session | ✅ |
 | `/api/admin/v1/oauth2-sessions/{id}/finish` | POST | Terminate an OAuth 2.0 session | ✅ |
 
-### ✅ Personal Sessions
+### Personal Sessions
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -281,7 +280,7 @@ Superseded: redundant with existing user creation via User Admin API (already im
 | `/api/admin/v1/personal-sessions/{id}/revoke` | POST | Revoke a personal session | ✅ |
 | `/api/admin/v1/personal-sessions/{id}/regenerate` | POST | Regenerate personal session token | ✅ |
 
-### ✅ Browser Sessions
+### Browser Sessions
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -289,7 +288,7 @@ Superseded: redundant with existing user creation via User Admin API (already im
 | `/api/admin/v1/user-sessions/{id}` | GET | Get a browser session | ✅ |
 | `/api/admin/v1/user-sessions/{id}/finish` | POST | Terminate a browser session | ✅ |
 
-### ✅ Upstream OAuth Links
+### Upstream OAuth Links
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
@@ -298,14 +297,14 @@ Superseded: redundant with existing user creation via User Admin API (already im
 | `/api/admin/v1/upstream-oauth-links/{id}` | GET | Get an upstream OAuth link | ✅ |
 | `/api/admin/v1/upstream-oauth-links/{id}` | DELETE | Remove an upstream OAuth link | ✅ |
 
-### ✅ Upstream OAuth Providers
+### Upstream OAuth Providers
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
 | `/api/admin/v1/upstream-oauth-providers` | GET | List upstream OAuth providers | ✅ |
 | `/api/admin/v1/upstream-oauth-providers/{id}` | GET | Get an upstream OAuth provider | ✅ |
 
-### ✅ Policy Data
+### Policy Data
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|

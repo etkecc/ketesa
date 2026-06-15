@@ -117,7 +117,7 @@ export const FetchWellKnownConfig = async () => {
     }
 
     log.info("well-known config loaded", { homeserver });
-    // Well-known config overlays config.json values — including restrictBaseUrl —
+    // Well-known config overlays config.json values (including restrictBaseUrl)
     // intentionally; well-known is admin-trusted as part of the deployment's
     // homeserver config.
     LoadConfig(wkConfig);

@@ -60,7 +60,7 @@ beforeEach(() => {
   vi.mocked(jsonClient).mockResolvedValue({ json: {} } as any);
 });
 
-describe("lifecycle.beforeUpdate — MAS mode, no mas_id (Synapse-only user)", () => {
+describe("lifecycle.beforeUpdate: MAS mode, no mas_id (Synapse-only user)", () => {
   beforeEach(() => {
     vi.mocked(isMAS).mockReturnValue(true);
   });
@@ -95,7 +95,7 @@ describe("lifecycle.beforeUpdate — MAS mode, no mas_id (Synapse-only user)", (
   });
 });
 
-describe("lifecycle.beforeUpdate — MAS mode, with mas_id (regression guard)", () => {
+describe("lifecycle.beforeUpdate: MAS mode, with mas_id (regression guard)", () => {
   beforeEach(() => {
     vi.mocked(isMAS).mockReturnValue(true);
   });
@@ -234,7 +234,7 @@ describe("getMASUsersAsMainResource.delete", () => {
 
     expect(result.deactivated).toBe(true);
     expect(result.id).toBe("@alice:hs.example.com");
-    // previousData spread is preserved — RA's local cache needs the full record.
+    // previousData spread is preserved: RA's local cache needs the full record.
     expect(result.mas_id).toBe("01HABCDEFULID");
   });
 
@@ -280,7 +280,7 @@ describe("getMASUsersAsMainResource.delete", () => {
 
     await res.delete(params);
     expect(calls).toHaveLength(2);
-    // Same call shape both times — no fan-out, no accumulation.
+    // Same call shape both times; no fan-out, no accumulation.
     expect(calls[0].url).toBe(calls[1].url);
     expect(calls[0].method).toBe(calls[1].method);
   });
@@ -295,7 +295,7 @@ describe("getMASUsersAsMainResource.delete", () => {
     const res = getMASUsersAsMainResource();
     // Simulates the per-id invocation inside dataProvider.deleteMany when a caller passes
     // meta.records to thread per-record mas_id through. DeleteManyParams carries no
-    // previousData by contract — see ra-core types.d.ts:185.
+    // previousData by contract; see ra-core types.d.ts:185.
     const result = await res.delete({
       id: "@alice:hs.example.com",
       meta: {
@@ -365,7 +365,7 @@ describe("getMASUsersAsMainResource.delete", () => {
   });
 });
 
-describe("lifecycle.beforeUpdate — Synapse-only mode, erase guard", () => {
+describe("lifecycle.beforeUpdate: Synapse-only mode, erase guard", () => {
   // Regression for the catastrophic bug: deactivated + erased are present on every user record,
   // so the old `!== undefined` guard fired eraseUser on every save. The guard must only fire when
   // both flags are explicitly true AND actually changed.
@@ -380,12 +380,12 @@ describe("lifecycle.beforeUpdate — Synapse-only mode, erase guard", () => {
     });
 
     expect(base.eraseUser).not.toHaveBeenCalled();
-    // The profile PUT proceeds normally — no skip signal set.
+    // The profile PUT proceeds normally; no skip signal set.
     expect(base.update).toHaveBeenCalledTimes(1);
     expect(base.update.mock.calls[0][1].meta?.userErased).toBeFalsy();
   });
 
-  it("does NOT erase when only deactivating (deactivated true, erased false) — deactivate flows to the PUT", async () => {
+  it("does NOT erase when only deactivating (deactivated true, erased false); deactivate flows to the PUT", async () => {
     const base = makeBase();
     const wrap = wrapWithLifecycle(base as any);
 

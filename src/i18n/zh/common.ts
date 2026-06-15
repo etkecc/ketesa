@@ -96,7 +96,6 @@ const common: Record<string, any> = {
         header: "密码",
         all_passwords_present: "每条记录的密码",
         count_passwords_present: "%{smart_count} 个含密码的记录 |||| %{smart_count} 个含密码的记录",
-        use_passwords: "使用 CSV 中标记的密码",
       },
       upload: {
         header: "导入 CSV 文件",
@@ -113,7 +112,6 @@ const common: Record<string, any> = {
         successful: "%{smart_count} 条记录导入成功",
         skipped: "跳过 %{smart_count} 条记录",
         download_skipped: "下载跳过的记录",
-        with_error: "%{smart_count} 条记录出现错误 ||| %{smart_count} 条记录出现错误",
         simulated_only: "只是一次模拟运行",
       },
     },

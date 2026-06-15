@@ -8,13 +8,13 @@
  * ─── PURPOSE ──────────────────────────────────────────────────────────────────
  * Verifies correct behavior for all field types handled by injectCellTitles and
  * all accessibility attributes added by AccessibleRow/AccessibleBody.
- * Tests are kept even after bugs are fixed — they act as regression guards.
+ * Tests are kept even after bugs are fixed; they act as regression guards.
  * "← PASSES" marks confirmed correct behavior; no "← FAILS" remain.
  *
  * ─── HOW THE COMPONENT WORKS ──────────────────────────────────────────────────
  * Datagrid wraps react-admin's DatagridConfigurable with two custom components:
  *
- *  AccessibleBody  — replaces the default tbody.  For every row it:
+ *  AccessibleBody; replaces the default tbody.  For every row it:
  *    1. Resolves the resource via useResourceContext({ resource }) so that a
  *       missing resource prop falls back to the parent List's ResourceContext.
  *    2. Wraps the record in RecordContextProvider so child fields can read it.
@@ -37,7 +37,7 @@
  *         c. Clones the child with title=`${label}: ${value}`.
  *    4. Renders an AccessibleRow (described below) with the injected children.
  *
- *  AccessibleRow   — replaces the default tr.  For clickable rows it:
+ *  AccessibleRow; replaces the default tr.  For clickable rows it:
  *    1. Adds tabIndex=0 so the row is keyboard-focusable.
  *    2. Adds a keyDown handler: Enter/Space → currentTarget.click()
  *       (guarded so events bubbled from inner interactive elements are ignored).
@@ -49,7 +49,7 @@
  *
  *  DateField      : child.type === DateField (real import, works correctly)
  *  ReferenceField : typeof props.reference === "string"
- *    Duck-typed because child.type === ReferenceField triggers TS6133 — TypeScript
+ *    Duck-typed because child.type === ReferenceField triggers TS6133; TypeScript
  *    treats the === comparison as "never reads" the imported value and raises an
  *    "is declared but its value is never read" error.  The same constraint applies
  *    to FunctionField (see below).
@@ -88,7 +88,7 @@ import userEvent from "@testing-library/user-event";
 // ─── IMPORTANT: hoisting note ─────────────────────────────────────────────────
 // vitest hoists vi.mock() calls to the top of the compiled output, before any
 // import statements.  However, the factory functions passed to vi.mock() are
-// closures — they are REGISTERED at hoist time but EXECUTED lazily, only when
+// closures; they are REGISTERED at hoist time but EXECUTED lazily, only when
 // "react-admin" is first imported during test setup.  By that point all
 // module-level const/let declarations below have already been evaluated, so
 // closures that reference them (e.g. `() => translate` or `mockDataRef.current`)
@@ -108,7 +108,7 @@ import userEvent from "@testing-library/user-event";
 //   - "ra.boolean.true/false" ARE present so boolean title tests can PASS,
 //     proving that the boolean translation path works correctly.
 const TRANSLATIONS: Record<string, string> = {
-  // users_media resource — mirrors src/i18n/de/misc_resources.ts
+  // users_media resource; mirrors src/i18n/de/misc_resources.ts
   "resources.users_media.fields.media_id": "Medien-ID",
   "resources.users_media.fields.created_ts": "Erstellt",
   "resources.users_media.fields.last_access_ts": "Letzter Zugriff",
@@ -116,15 +116,15 @@ const TRANSLATIONS: Record<string, string> = {
   "resources.users_media.fields.media_type": "Typ",
   "resources.users_media.fields.upload_name": "Dateiname",
   "resources.users_media.fields.quarantined_by": "In Quarantäne von",
-  // users resource — mirrors src/i18n/de/users.ts
+  // users resource; mirrors src/i18n/de/users.ts
   "resources.users.fields.id": "Benutzer-ID",
   "resources.users.fields.displayname": "Anzeigename", // "Display name"
   "resources.users.fields.admin": "Administrator",
   "resources.users.fields.creation_ts_ms": "Erstellt am",
   "resources.users.fields.is_guest": "Gastbenutzer",
-  // room_members resource — deliberately missing "displayname" (exposes Bug #5)
+  // room_members resource; deliberately missing "displayname" (exposes Bug #5)
   "resources.room_members.fields.id": "Mitglieds-ID",
-  // boolean labels — react-admin's standard keys used by formatCellValue()
+  // boolean labels; react-admin's standard keys used by formatCellValue()
   "ra.boolean.true": "Ja", // "Yes"
   "ra.boolean.false": "Nein", // "No"
 };
@@ -187,7 +187,7 @@ const MEDIA_RECORD = {
 /**
  * A users record.  Mirrors the shape used by UserList in
  * src/resources/users/List.tsx.  Key values:
- *   - id          : a Matrix user ID containing special chars (@, :) — these
+ *   - id          : a Matrix user ID containing special chars (@, :); these
  *     are valid in Matrix but invalid as HTML id attributes, so DatagridRow
  *     mock must NOT spread `id` onto <tr>.
  *   - creation_ts_ms : same millisecond-timestamp bug as created_ts above.
@@ -203,7 +203,7 @@ const USER_RECORD = {
 };
 
 /**
- * A room_members record (minimal — only the fields the room-members Datagrid
+ * A room_members record (minimal; only the fields the room-members Datagrid
  * actually uses).  The displayname field is here to support two tests:
  *   - ReferenceField test: the outer record's `id` is the source; the mock
  *     ReferenceField resolves RESOLVED_USERS["@alice:example.org"].displayname.
@@ -269,7 +269,7 @@ vi.mock("react-admin", async importOriginal => {
     // DataProvider mock as well, which is disproportionate for this unit test.
     //
     // What this mock does instead:
-    //   1. Calls useRecordContext() (REAL — reads from RecordContextProvider set
+    //   1. Calls useRecordContext() (REAL; reads from RecordContextProvider set
     //      by AccessibleBody) to get the current row record.
     //   2. Reads record[source] to find the reference ID (e.g. "@alice:example.org").
     //   3. Looks up RESOLVED_USERS[id] to simulate what a real DataProvider would
@@ -277,7 +277,7 @@ vi.mock("react-admin", async importOriginal => {
     //   4. Wraps children in RecordContextProvider (REAL) with the resolved record
     //      so the inner TextField reads displayname = "Alice" from context.
     //   5. Renders a <span title={title}> so the `title` prop injected by
-    //      injectCellTitles DOES appear in the DOM — this is the key difference
+    //      injectCellTitles DOES appear in the DOM; this is the key difference
     //      from the real ReferenceField, which is a pure context provider and
     //      renders NO DOM element, meaning the title would be silently discarded.
     //
@@ -285,16 +285,16 @@ vi.mock("react-admin", async importOriginal => {
     //   injectCellTitles detects ReferenceField via typeof props.reference === "string",
     //   reads the first child's source ("displayname"), and looks it up on the outer
     //   record: record["displayname"] = "Alice".  The injected title is therefore
-    //   "Anzeigename: Alice" — the resolved display name, not the raw ID.
+    //   "Anzeigename: Alice"; the resolved display name, not the raw ID.
     ReferenceField: vi.fn(
       ({
         children,
-        // `source` — the field on the outer record whose value is the reference
+        // `source`; the field on the outer record whose value is the reference
         // ID, e.g. source="id" → record["id"] = "@alice:example.org".
         source,
-        // `reference` — the resource to fetch from, e.g. "users".
+        // `reference`; the resource to fetch from, e.g. "users".
         reference,
-        // `title` — injected by injectCellTitles as "Label: resolved-display-value".
+        // `title`; injected by injectCellTitles as "Label: resolved-display-value".
         // We pass this through to the DOM <span> so tests can assert on it.
         title,
         // Consume all other props (label, link, sortable, etc.) silently
@@ -367,7 +367,7 @@ vi.mock("react-admin", async importOriginal => {
         // is clickable (affects tabIndex, keyboard handler, aria attributes).
         rowClick,
         // All other DatagridConfigurable props (sx, sort, bulkActionButtons, etc.)
-        // are ignored — they are irrelevant to the accessibility features we test.
+        // are ignored; they are irrelevant to the accessibility features we test.
       }: {
         body: React.ReactElement;
         children?: React.ReactNode;
@@ -379,9 +379,9 @@ vi.mock("react-admin", async importOriginal => {
           // at runtime it is AccessibleBodyProps which accepts all these fields.
           body as React.ReactElement<Record<string, unknown>>,
           {
-            // Records to render — set by renderWith() before each test render.
+            // Records to render; set by renderWith() before each test render.
             data: mockDataRef.current,
-            // Resource name — used by resolveLabel() to construct the i18n key
+            // Resource name; used by resolveLabel() to construct the i18n key
             // (e.g. "resources.users_media.fields.created_ts").
             resource: resourceRef.current,
             // Forward rowClick so AccessibleRow knows whether rows are clickable.
@@ -430,7 +430,7 @@ vi.mock("react-admin", async importOriginal => {
         // rowIndex  : consumed by AccessibleRow before reaching DatagridRow;
         //             included here defensively in case it leaks through.
         rowIndex: _rowIndex,
-        // rowLabel  : same — consumed by AccessibleRow.
+        // rowLabel  : same; consumed by AccessibleRow.
         rowLabel: _rowLabel,
         // sx        : MUI system prop; not a DOM attribute.
         sx: _sx,
@@ -441,7 +441,7 @@ vi.mock("react-admin", async importOriginal => {
         // ── DOM-valid props (forwarded to <tr>) ─────────────────────────────
         // These are set by AccessibleRow on clickable rows.
         "aria-label": ariaLabel, // set from rowLabel prop or record representation
-        "aria-roledescription": ariaRoledescription, // "link" on clickable rows — signals navigability to AT without breaking table ARIA hierarchy
+        "aria-roledescription": ariaRoledescription, // "link" on clickable rows; signals navigability to AT without breaking table ARIA hierarchy
         "aria-rowindex": ariaRowIndex, // 1-based, accounting for header row + pagination
         tabIndex, // 0 on clickable rows, absent on static rows
         onKeyDown, // AccessibleRow's keyboard handler (Enter/Space → click)
@@ -532,23 +532,23 @@ vi.mock("./EmptyState", () => ({ default: () => null }));
 // are resolved.  At runtime, these imports receive the mocked/partial-mocked
 // versions of the modules.
 //
-// BooleanField, DateField, FunctionField, TextField — kept REAL (from ...actual)
+// BooleanField, DateField, FunctionField, TextField; kept REAL (from ...actual)
 //   so their DOM output is authentic.
-// ReferenceField — MOCKED (see above).
-// RaRecord — type only; not mocked.
+// ReferenceField; MOCKED (see above).
+// RaRecord; type only; not mocked.
 import { BooleanField, DateField, FunctionField, RaRecord, ReferenceField, TextField } from "react-admin";
 
-// DATE_FORMAT — the Intl.DateTimeFormatOptions used by the actual DateField
+// DATE_FORMAT; the Intl.DateTimeFormatOptions used by the actual DateField
 // calls in production (src/utils/date.ts).  Imported here so the expected date
 // string in tests is computed with the same format options.
 import { DATE_FORMAT } from "../../utils/date";
 
-// formatBytes — the human-readable byte formatter used by FunctionField in the
+// formatBytes; the human-readable byte formatter used by FunctionField in the
 // users media table.  Imported here to compute the expected formatted string.
 import { formatBytes } from "../../utils/formatBytes";
 
-// Datagrid — the component under test.
-// DatagridProps — needed for typing the rowClick/rowLabel options in renderWith.
+// Datagrid; the component under test.
+// DatagridProps; needed for typing the rowClick/rowLabel options in renderWith.
 import Datagrid, { DatagridProps } from "./Datagrid";
 
 // ─── renderWith helper ─────────────────────────────────────────────────────────
@@ -583,7 +583,7 @@ function renderWith(
   resourceRef.current = resource;
 
   return render(
-    // No providers needed — RecordContextProvider is supplied per-row by
+    // No providers needed; RecordContextProvider is supplied per-row by
     // AccessibleBody (using the real implementation from ...actual), and all
     // other context requirements are satisfied by the mocked hooks above.
     <Datagrid rowClick={options?.rowClick} rowLabel={options?.rowLabel}>
@@ -600,7 +600,7 @@ describe("Datagrid accessibility features", () => {
   // Fields: DateField (timestamps), FunctionField+formatBytes (file size),
   //         TextField (plain strings), nullable TextField (quarantined_by).
 
-  describe("cell title attributes — users media table pattern", () => {
+  describe("cell title attributes; users media table pattern", () => {
     it("date fields: title should show formatted date, not raw timestamp", () => {
       // injectCellTitles detects DateField via child.type === DateField and
       // formats the timestamp using:
@@ -643,7 +643,7 @@ describe("Datagrid accessibility features", () => {
     });
 
     it("text fields: title has translated label and raw string value", () => {
-      // CORRECT BEHAVIOR — plain string values work fine.
+      // CORRECT BEHAVIOR; plain string values work fine.
       //
       // record["media_type"] = "image/jpeg" (a string).
       // formatCellValue("image/jpeg") = String("image/jpeg") = "image/jpeg".
@@ -656,7 +656,7 @@ describe("Datagrid accessibility features", () => {
     });
 
     it("null fields: title shows em dash for null values", () => {
-      // CORRECT BEHAVIOR — null values are formatted as the em dash character.
+      // CORRECT BEHAVIOR; null values are formatted as the em dash character.
       //
       // record["quarantined_by"] = null.
       // formatCellValue(null) → (value == null) → returns "—".
@@ -671,9 +671,9 @@ describe("Datagrid accessibility features", () => {
   // Mirrors src/resources/users/List.tsx → UserList.
   // Fields: BooleanField (admin, is_guest), DateField (creation_ts_ms).
 
-  describe("cell title attributes — users main table pattern", () => {
+  describe("cell title attributes; users main table pattern", () => {
     it("boolean true: title uses translated ra.boolean.true string", () => {
-      // CORRECT BEHAVIOR — boolean true is translated.
+      // CORRECT BEHAVIOR; boolean true is translated.
       //
       // record["admin"] = true (a boolean).
       // formatCellValue(true) = translate("ra.boolean.true", { _: "Yes" })
@@ -690,7 +690,7 @@ describe("Datagrid accessibility features", () => {
     });
 
     it("boolean false: title uses translated ra.boolean.false string", () => {
-      // CORRECT BEHAVIOR — boolean false is translated.
+      // CORRECT BEHAVIOR; boolean false is translated.
       //
       // record["is_guest"] = false.
       // formatCellValue(false) = translate("ra.boolean.false", { _: "No" }) = "Nein".
@@ -720,7 +720,7 @@ describe("Datagrid accessibility features", () => {
   // Mirrors src/resources/rooms/Show.tsx → RoomMembersList.
   // Fields: ReferenceField (id → users, displayname).
 
-  describe("cell title attributes — room members table pattern (reference fields)", () => {
+  describe("cell title attributes; room members table pattern (reference fields)", () => {
     it("ReferenceField: title should show resolved display value, not raw source ID", () => {
       // injectCellTitles detects ReferenceField via typeof props.reference === "string"
       // (child.type === ReferenceField triggers TS6133, so duck-typing is used).
@@ -750,9 +750,9 @@ describe("Datagrid accessibility features", () => {
 
   // ── Field label translation ────────────────────────────────────────────────
 
-  describe("cell title attributes — field label translation", () => {
+  describe("cell title attributes; field label translation", () => {
     it("fields without explicit label: label resolved from resource translation key", () => {
-      // CORRECT BEHAVIOR — implicit label resolution works.
+      // CORRECT BEHAVIOR; implicit label resolution works.
       //
       // resolveLabel(undefined, "media_id", "users_media", translate):
       //   label prop is undefined → no explicit label.
@@ -766,7 +766,7 @@ describe("Datagrid accessibility features", () => {
     });
 
     it("explicit label string prop: resolved via translate", () => {
-      // CORRECT BEHAVIOR — explicit translation key label works.
+      // CORRECT BEHAVIOR; explicit translation key label works.
       //
       // resolveLabel("resources.users.fields.id", "id", "users", translate):
       //   label prop is the string "resources.users.fields.id".
@@ -791,7 +791,7 @@ describe("Datagrid accessibility features", () => {
       // internal naming to screen-reader users.
       //
       // The assertion uses .not.toMatch(/^unlabeled_field:/) to confirm the raw
-      // source name is not used — the exact humanized form is not asserted because
+      // source name is not used; the exact humanized form is not asserted because
       // the humanization algorithm may evolve.
       const record: RaRecord = { id: "1", unlabeled_field: "some-value" };
       renderWith([record], "users_media", <TextField source="unlabeled_field" />);
@@ -822,7 +822,7 @@ describe("Datagrid accessibility features", () => {
 
   describe("row accessibility attributes", () => {
     it("clickable rows: aria-label provided by rowLabel function", () => {
-      // CORRECT BEHAVIOR — function rowLabel generates a descriptive aria-label.
+      // CORRECT BEHAVIOR; function rowLabel generates a descriptive aria-label.
       //
       // AccessibleRow evaluates: typeof rowLabel === "function"
       //   → ariaLabel = rowLabel(record)
@@ -839,7 +839,7 @@ describe("Datagrid accessibility features", () => {
     });
 
     it("clickable rows: aria-label from rowLabel field name", () => {
-      // CORRECT BEHAVIOR — string rowLabel looks up the named field on the record.
+      // CORRECT BEHAVIOR; string rowLabel looks up the named field on the record.
       //
       // AccessibleRow evaluates: typeof rowLabel === "string"
       //   → ariaLabel = String(record["displayname"] ?? record.id) = "Alice"
@@ -851,7 +851,7 @@ describe("Datagrid accessibility features", () => {
     });
 
     it("first data row on page 1 has aria-rowindex 2 (header occupies index 1)", () => {
-      // CORRECT BEHAVIOR — aria-rowindex calculation.
+      // CORRECT BEHAVIOR; aria-rowindex calculation.
       //
       // From AccessibleBody:
       //   page = 1, perPage = 10 (mocked by useListContext)
@@ -878,7 +878,7 @@ describe("Datagrid accessibility features", () => {
     });
 
     it("rows without rowClick: no aria-rowindex, no aria-label, no tabIndex, no aria-roledescription", () => {
-      // CORRECT BEHAVIOR — non-clickable rows have no accessibility overhead.
+      // CORRECT BEHAVIOR; non-clickable rows have no accessibility overhead.
       //
       // AccessibleRow checks: isClickable = rowClick != null && rowClick !== false
       // When rowClick is not provided, isClickable = false → the entire
@@ -893,7 +893,7 @@ describe("Datagrid accessibility features", () => {
     });
 
     it("Enter key on a focusable row dispatches a click event", async () => {
-      // CORRECT BEHAVIOR — keyboard navigation via Enter key.
+      // CORRECT BEHAVIOR; keyboard navigation via Enter key.
       //
       // AccessibleRow.handleKeyDown:
       //   if (e.target !== e.currentTarget) return;  ← ignores bubbled events
@@ -906,7 +906,7 @@ describe("Datagrid accessibility features", () => {
       //
       // We observe the click event directly on the DOM element (not via the
       // rowClick prop) because our DatagridRow mock does not wire rowClick to
-      // an onClick handler — the real DatagridRow would, but we only need to
+      // an onClick handler; the real DatagridRow would, but we only need to
       // verify that AccessibleRow dispatches the click, not that RA handles it.
       const user = userEvent.setup(); // userEvent v14 requires setup() for keyboard
       renderWith([USER_RECORD as unknown as RaRecord], "users", <TextField source="id" />, { rowClick: "edit" });
@@ -923,7 +923,7 @@ describe("Datagrid accessibility features", () => {
     });
 
     it("Space key on a focusable row dispatches a click event", async () => {
-      // CORRECT BEHAVIOR — keyboard navigation via Space key.
+      // CORRECT BEHAVIOR; keyboard navigation via Space key.
       // Same mechanism as Enter above; Space is the alternative activation key
       // for interactive ARIA roles (role="row" with tabIndex acts like a button).
       const user = userEvent.setup();

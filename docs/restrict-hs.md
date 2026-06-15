@@ -1,26 +1,12 @@
-# 🏠 Restricting Available Homeservers
+# Restricting available homeservers
 
-By default, Ketesa lets users connect to any Matrix homeserver. For managed deployments, you'll usually want to lock this down so the homeserver field is either hidden or pre-fixed to a known value.
+By default the Ketesa login page lets anyone type any Matrix homeserver URL. Setting `restrictBaseUrl` locks that down, which is what you want for a deployment that should only ever talk to its own server, a public instance like `admin.example.com` meant to reach only `matrix.example.com`, or a fixed set of servers you manage and nothing outside it.
 
-**Common use cases:**
+How it changes the login page depends on what you set. A single URL removes the homeserver field entirely and fixes the connection to that value. A list turns the field into a dropdown limited to those choices. An empty string or empty list counts as no restriction, the same as leaving it unset.
 
-- **Managed hosting** — you deploy Ketesa specifically for one server and don't want users accidentally pointing it at another
-- **Public Ketesa instance** — you run `admin.example.com` and want it to only ever talk to `matrix.example.com`
-- **Multi-server management** — you manage several homeservers and want to allow exactly those, blocking everything else
+Either the delegated domain or the actual Synapse URL works. With `wellKnownDiscovery` on (the default), Ketesa resolves a restricted value through `/.well-known/matrix/client` just as it resolves a freely-typed one, and logs in against the resolved address, so for MXIDs like `@user:example.com` with Synapse at `matrix.example.com` you can set either `https://example.com` or `https://matrix.example.com`. The distinction only matters when that lookup can't help: if you've turned `wellKnownDiscovery` off, or the domain serves no well-known file, the value is used exactly as written and has to point straight at Synapse.
 
-When `restrictBaseUrl` is set to a single value, the homeserver field on the login page is pre-filled and locked. When set to an array, users can only choose from that list.
-
-## ⚙️ Configuration
-
-`restrictBaseUrl` accepts both a single string and an array of strings.
-
-> 💡 **Note:** Use the _actual_ homeserver URL, not the delegated one. For example, if you have a homeserver `example.com` where users have MXIDs like `@user:example.com`, but actual Synapse is installed on `matrix.example.com` subdomain, you should use `https://matrix.example.com` in the configuration.
-
-The examples below contain the configuration settings to restrict the Ketesa instance to work only with `example.com` (with Synapse running at `matrix.example.com`) and `example.net` (with Synapse running at `synapse.example.net`) homeservers.
-
-[Configuration options](config.md)
-
-### config.json
+The value lives under `restrictBaseUrl` in either configuration source (see [Configuration](./config.md)). To restrict to `example.com` (Synapse at `matrix.example.com`) and `example.net` (Synapse at `synapse.example.net`):
 
 ```json
 {
@@ -31,15 +17,16 @@ The examples below contain the configuration settings to restrict the Ketesa ins
 }
 ```
 
-### `/.well-known/matrix/client`
+In `/.well-known/matrix/client`, the same value goes under the `cc.etke.ketesa` key:
 
 ```json
 {
   "cc.etke.ketesa": {
-    "restrictBaseUrl": [
-      "https://matrix.example.com",
-      "https://synapse.example.net"
-    ]
+    "restrictBaseUrl": ["https://matrix.example.com", "https://synapse.example.net"]
   }
 }
 ```
+
+---
+
+See also: [Configuration](./config.md) · [Documentation index](./README.md)

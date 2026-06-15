@@ -7,7 +7,7 @@ import createLogger from "../utils/logger";
 
 const log = createLogger("http");
 
-// Singleton refresh promise — prevents multiple concurrent refresh requests
+// Singleton refresh promise; prevents multiple concurrent refresh requests
 let ongoingRefresh: Promise<boolean> | null = null;
 
 // Adds the access token to all requests

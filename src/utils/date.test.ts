@@ -160,7 +160,7 @@ describe("getTimeSince", () => {
 
   it("appends Z to date strings without timezone suffix", () => {
     setNow(new Date("2024-01-01T12:01:00Z"));
-    // "2024-01-01 12:00:00" has no Z — should be treated as UTC
+    // "2024-01-01 12:00:00" has no Z; should be treated as UTC
     const result = getTimeSince("2024-01-01 12:00:00");
     expect(result.timeI18Nkey).toBe("etkecc.time.minutes");
     expect(result.timeI18Nparams).toEqual({ smart_count: 1 });

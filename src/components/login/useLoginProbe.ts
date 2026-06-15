@@ -32,7 +32,7 @@ interface LoginFlow {
  * Staleness is handled in start() via the AbortController signal, so the reducer
  * only transitions on the action tag. START carries the raw url (for instant
  * "resolving" feedback) and RESOLVED carries the well-known-resolved url, so the
- * two urls legitimately differ — a url-matching guard here would reject the
+ * two urls legitimately differ; a url-matching guard here would reject the
  * resolved result.
  */
 function probeReducer(state: ProbeState, action: ProbeAction): ProbeState {
@@ -54,7 +54,7 @@ function probeReducer(state: ProbeState, action: ProbeAction): ProbeState {
 
 /**
  * Derive the advertised capabilities from a resolved probe. password, sso, and
- * oidc are computed independently — a Synapse + SSO deployment advertises both
+ * oidc are computed independently: a Synapse + SSO deployment advertises both
  * password and sso, and the spec allows their coexistence.
  *
  * OIDC counts as usable only with a present, well-formed issuer: a delegated-OIDC

@@ -16,16 +16,16 @@ vi.mock("./http", () => ({
 
 describe("splitMxid", () => {
   test.each([
-    // valid — hostname
+    // valid: hostname
     ["@name:domain.tld", { name: "name", domain: "domain.tld" }],
     ["@name:domain.tld:8448", { name: "name", domain: "domain.tld:8448" }],
-    // valid — single-label / localhost
+    // valid: single-label / localhost
     ["@name:localhost", { name: "name", domain: "localhost" }],
     ["@name:localhost:8448", { name: "name", domain: "localhost:8448" }],
-    // valid — IPv4
+    // valid: IPv4
     ["@name:192.168.1.1", { name: "name", domain: "192.168.1.1" }],
     ["@name:192.168.1.1:8448", { name: "name", domain: "192.168.1.1:8448" }],
-    // valid — IPv6
+    // valid: IPv6
     ["@name:[::1]", { name: "name", domain: "[::1]" }],
     ["@name:[::1]:8448", { name: "name", domain: "[::1]:8448" }],
     ["@name:[2001:db8::1]", { name: "name", domain: "[2001:db8::1]" }],
@@ -41,16 +41,16 @@ describe("splitMxid", () => {
 
 describe("isValidBaseUrl", () => {
   test.each([
-    // valid — hostname
+    // valid: hostname
     ["http://foo.bar", true],
     ["https://foo.bar", true],
     ["https://foo.bar:1234", true],
     ["https://foo.bar/", true],
     ["https://foo.bar:1234/", true],
-    // valid — IPv4
+    // valid: IPv4
     ["http://192.168.1.1", true],
     ["https://192.168.1.1:8448", true],
-    // valid — IPv6
+    // valid: IPv6
     ["http://[::1]", true],
     ["https://[::1]", true],
     ["http://[::1]:8448", true],
@@ -59,7 +59,7 @@ describe("isValidBaseUrl", () => {
     ["https://[2001:db8::1]:443", true],
     ["https://[2001:db8::1]:443/", true],
     ["http://[2001:db8:cafe::1]:7000", true],
-    // invalid — missing / wrong protocol
+    // invalid: missing / wrong protocol
     [undefined, false],
     [null, false],
     ["", false],
@@ -67,10 +67,10 @@ describe("isValidBaseUrl", () => {
     ["foo.bar", false],
     ["ftp://foo.bar", false],
     ["http:/foo.bar", false],
-    // invalid — has path
+    // invalid: has path
     ["http://foo.bar/path", false],
     ["https://[::1]/path", false],
-    // invalid — bare IPv6 without brackets
+    // invalid: bare IPv6 without brackets
     ["http://::1", false],
   ])("isValidBaseUrl(%s) === %s", (url, expected) => {
     expect(isValidBaseUrl(url)).toBe(expected);

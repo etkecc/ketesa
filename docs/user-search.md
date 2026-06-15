@@ -1,15 +1,7 @@
-# 🔍 User Search
+# User search
 
-The Users list includes a search field that filters by MXID (user ID) and display name.
+The Users list has a search box that matches against both the MXID and the display name.
 
-## Normal search
+By default it does a substring match: type `bot` and you get every user whose MXID or display name contains "bot". Prefixing the term with `!` inverts that. `!bot` returns the users whose MXID and display name both lack "bot".
 
-Type a term (e.g. `bot`) to show only users whose MXID or display name **contains** that term.
-
-## Reverse search
-
-Prefix the term with `!` (e.g. `!bot`) to show users whose MXID and display name **do not contain** the term.
-
-The search field will display a ⏳ hourglass icon when reverse search is active to indicate the operation may take longer than a regular search — the server must be fully scanned to exclude matches.
-
-> 💡 Reverse search works in both native Synapse and MAS-backed deployments.
+Reverse search is heavier than a normal one. To exclude matches it scans the full user list instead of asking the server for a filtered page, so it runs slower, and the search box swaps its magnifying glass for an hourglass while it works. The behavior is the same on native Synapse and on MAS-backed deployments.

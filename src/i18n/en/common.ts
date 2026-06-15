@@ -103,7 +103,6 @@ const common = {
         header: "Passwords",
         all_passwords_present: "All entries have a password",
         count_passwords_present: "%{smart_count} entry has a password |||| %{smart_count} entries have passwords",
-        use_passwords: "Use passwords from CSV",
       },
       upload: {
         header: "Input CSV file",
@@ -120,7 +119,6 @@ const common = {
         successful: "%{smart_count} entries successfully imported",
         skipped: "%{smart_count} entries skipped",
         download_skipped: "Download skipped records",
-        with_error: "%{smart_count} entry with errors |||| %{smart_count} entries with errors",
         simulated_only: "This was a simulation only — no changes were made",
       },
     },

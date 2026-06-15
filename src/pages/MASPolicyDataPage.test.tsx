@@ -41,7 +41,7 @@ const setTextarea = (el: Element, value: string) => {
 
 describe("MASPolicyDataPage", () => {
   it("does not show policy content while still loading", () => {
-    // Render without awaiting effects — policy stays undefined → Loading state
+    // Render without awaiting effects; policy stays undefined → Loading state
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     const dp = makeMockDataProvider({ getMASPolicyData: vi.fn(() => new Promise(() => {})) });
     render(

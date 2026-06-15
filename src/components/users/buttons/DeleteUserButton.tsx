@@ -85,7 +85,7 @@ const DeleteUserButton: React.FC<DeleteUserButtonProps> = props => {
             await dataProvider.masDeactivateUser(masId, false);
             return;
           }
-          // Synapse-only user in MAS mode — soft-deactivate via Synapse v2.
+          // Synapse-only user in MAS mode: soft-deactivate via Synapse v2.
           await jsonClient(`${baseUrl}/_synapse/admin/v2/users/${encodeURIComponent(String(id))}`, {
             method: "PUT",
             body: JSON.stringify({ deactivated: true }),

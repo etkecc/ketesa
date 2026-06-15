@@ -1,144 +1,53 @@
-# 📊 Server Statistics & Scheduled Tasks
+# Server statistics and scheduled tasks
 
-Ketesa exposes three read-focused views that help administrators understand server health, storage consumption, and background job status without querying the database directly.
+Three read-only views for seeing where storage goes and what Synapse is doing in the background: the largest rooms in the database, the users with the most uploaded media, and the queue of scheduled tasks. Two of them carry caveats worth knowing before you trust the numbers. The database-room sizes are rough estimates that can be far off and leave media out entirely, and that view only ever shows the ten largest rooms, not your whole server. The media view is the one page here with destructive buttons, and they do less, or more, than their labels suggest, so [Media management](./media.md) documents them instead of this page.
 
----
+You reach all three from the sidebar, each as its own top-level entry: **Database room statistics**, **Media**, and **Scheduled tasks**. There is no "Statistics" submenu grouping them; they sit alongside Users and Rooms.
 
-## 🗄️ Database Room Statistics
-
-| Light | Dark |
-|-------|------|
-| ![Room Statistics (light)](./screenshots/light/rooms-stats.webp) | ![Room Statistics (dark)](./screenshots/dark/rooms-stats.webp) |
-
-### 📋 What it shows
-
-The **Statistics → Database Rooms** page lists every room that exists on your homeserver, ranked by its estimated footprint in the Synapse database. This helps you identify which rooms are consuming the most storage and decide whether to purge history, restrict membership, or take other remediation steps.
-
-> 📝 The size shown is an *estimate* produced by Synapse — it reflects database row sizes and may not map 1:1 to disk usage reported by your storage backend.
-
-### 📐 Columns
-
-| Column | Description |
-|--------|-------------|
-| Avatar | Room avatar image |
-| `room_id` | Fully-qualified Matrix room ID |
-| `canonical_alias` | Human-readable alias for the room, if set |
-| `name` | Display name of the room |
-| `joined_members` | Number of currently joined members |
-| `estimated_size` | Estimated database storage consumed (formatted, e.g. `1.4 GB`) |
-
-### 📤 Export
-
-An **Export** button is available in the toolbar. It is enabled only when data is present. The export downloads all rows in CSV format.
-
-### 🔍 How to identify large rooms
-
-1. Navigate to **Statistics → Database Rooms** in the left sidebar.
-2. The list is returned sorted by `estimated_size` descending by default — the largest rooms appear first.
-3. Click any row to open the full room detail page where you can inspect members, aliases, and history-purge options.
-
----
-
-## 🖼️ User Media Statistics
-
-### 📋 What it shows
-
-The **Statistics → User Media** page lists local users ordered by total media storage they have uploaded. Use this view to spot users with abnormally large media footprints before storage becomes a problem.
-
-> 📝 The default sort is `media_length` descending, so the heaviest users appear immediately without any manual sort step.
-
-### 📐 Columns
-
-| Column | Description |
-|--------|-------------|
-| Avatar | User profile picture |
-| `user_id` | Fully-qualified Matrix user ID |
-| `displayname` | User's display name |
-| `media_count` | Number of media items uploaded by this user |
-| `media_length` | Total size of all uploaded media (formatted, e.g. `820 MB`) |
-| `is_guest` | Whether the account is a guest account |
-| `deactivated` | Whether the account has been deactivated |
-| `locked` | Whether the account is currently locked |
-| `erased` | Whether the account has been erased |
-
-### 🎛️ Filters
-
-A **Search** input is always visible in the toolbar. It filters the list by user ID or display name.
-
-### 🔧 Direct media management actions
-
-> 💡 The User Media statistics page has direct **Manage media** action buttons per user — you can jump straight to quarantine or delete a user's media without navigating to their profile first. See [Media management](./media.md).
-
-The toolbar contains two global media action buttons that apply across all listed users:
-
-- **Delete media** — permanently remove local media files.
-- **Purge remote media** — remove cached copies of media that originated on remote servers.
-
-Clicking a row navigates directly to that user's media management page (`/users/<id>/media`), where per-file actions are available.
-
-### 📤 Export
-
-An **Export** button is available in the toolbar alongside the media action buttons. It is enabled only when data is present and downloads all rows in CSV format.
-
-### 🔍 How to find users with excessive media
-
-1. Navigate to **Statistics → User Media** in the left sidebar.
-2. The list is already sorted by `media_length` descending — the users consuming the most storage appear first.
-3. Use the **Search** filter to narrow by a specific user if needed.
-4. Click a row to open that user's media management page, or use the toolbar **Delete media** / **Purge remote media** buttons to act immediately.
-
----
-
-## ⏱️ Scheduled Tasks
+## The largest rooms
 
 | Light | Dark |
-|-------|------|
-| ![Scheduled Tasks (light)](./screenshots/light/scheduled-tasks.webp) | ![Scheduled Tasks (dark)](./screenshots/dark/scheduled-tasks.webp) |
+|---|---|
+| ![Database room statistics (light)](./screenshots/light/rooms-stats.webp) | ![Database room statistics (dark)](./screenshots/dark/rooms-stats.webp) |
 
-### 📋 What it is
+**Database room statistics** lists the ten rooms taking the most space in the Synapse database, largest first. Just the top ten, not your whole server. Click a row to open that room's detail page, where you can purge history, restrict membership, or take it from there.
 
-The **Scheduled Tasks** page is a read-only view of background jobs that Synapse registers and executes internally. Common examples include room history purges, user media cleanup, and federation catch-up tasks. Administrators cannot create or cancel tasks from this view — it is intended for inspection and debugging only.
+The size is the catch. Synapse builds it from PostgreSQL's query planner, and its own documentation warns the figure "can vary widely from reality": read it as a rough pointer to where disk is going, not an audit. It counts database rows only, so the room's media isn't in the number at all. The endpoint also doesn't exist on SQLite homeservers.
 
-> ⚠️ This page reflects the state Synapse reports via its Admin API. Tasks that complete very quickly may already be gone from the list by the time you look.
+If the page is empty, that's usually not a bug. Synapse returns an error until its background statistics job has populated the underlying table, and Ketesa renders that as an empty list rather than an error, so a freshly started server simply shows nothing here until the job has run.
 
-### 📐 Fields
+The columns are the room's avatar, its ID, canonical alias, name, joined-member count, and estimated size. None are sortable, because the order is Synapse's own, largest first. The toolbar **Export** button downloads the listed rows as CSV and appears only when there's data.
 
-| Field | Source key | Description |
-|-------|-----------|-------------|
-| ID | `id` | Internal numeric task identifier |
-| Action | `action` | Name of the background action being executed (e.g. `purge_history`) |
-| Status | `status` | Current lifecycle state — see status values below |
-| Timestamp | `timestamp_ms` | Date and time when the task was last updated |
-| Resource ID | `resource_id` | Matrix ID (room, user, etc.) the task is operating on |
-| Result | `result` | Structured JSON result payload returned on completion |
-| Error | `error` | Error message if the task failed |
+## Users by media usage
 
-### 🔴 Status values
+The page labelled **Media** in the sidebar lists local users ordered by how much media they've uploaded, heaviest first. Use it to spot a user with an outsized footprint before storage becomes a problem.
 
-| Status | Colour | Meaning |
-|--------|--------|---------|
-| `scheduled` | grey | Task is queued and waiting to start |
-| `active` | blue | Task is currently running |
-| `complete` | green | Task finished successfully |
-| `cancelled` | yellow | Task was cancelled before completion |
-| `failed` | red | Task encountered an error and did not complete |
+The columns are the user's avatar, ID, and display name, then their media count and total media size, then flags for guest, deactivated, locked, and erased accounts. A search box, always visible, filters by the localpart of a user's ID or their display name, matching any part of either. Click a row to open that user's media tab, where the per-file and bulk controls live; those are covered in [Media management](./media.md). An **Export** button sits in the toolbar here too, saving the listed rows to CSV when the list has data.
 
-### 🔎 Filter options
+The toolbar also carries two destructive actions that apply server-wide rather than to any one listed user: **Delete media** and **Purge remote media**. Both are documented under [Media management](./media.md), including the cutoff on **Delete media** that defaults to three months ago, so confirming it unchanged removes every local file nobody has touched in the last quarter.
 
-| Filter | Input type | Description |
-|--------|-----------|-------------|
-| Status | Dropdown (select) | Filter to tasks with a specific lifecycle state |
-| Action | Text | Filter by action name (e.g. `purge_history`) |
-| Resource ID | Text | Filter by the Matrix ID the task is associated with |
-| Max timestamp | Date/time picker | Show only tasks updated at or before this date and time |
+## Scheduled tasks
 
-### 💡 When to use scheduled tasks
+| Light | Dark |
+|---|---|
+| ![Scheduled tasks (light)](./screenshots/light/scheduled-tasks.webp) | ![Scheduled tasks (dark)](./screenshots/dark/scheduled-tasks.webp) |
 
-- **Debugging a stuck job** — filter by `status = active` and look for tasks that have been running longer than expected.
-- **Verifying a purge completed** — filter by action name (`purge_history`) and check for `status = complete` alongside the relevant `resource_id`.
-- **Diagnosing a failed background operation** — filter by `status = failed` and inspect the `error` field for details.
-- **Auditing recent activity** — use the **Max timestamp** filter together with a status filter to review what ran during a specific window.
+**Scheduled tasks** shows the background jobs Synapse runs on its own: history purges, media cleanup, federation catch-up, and the like. It's for inspection only. You can't start or cancel a task from here, just watch what Synapse scheduled, newest first. A task that finishes quickly may already be gone by the time you open the page.
+
+Each row carries the task's numeric ID, its action (`purge_history` and the like), its status, the timestamp it was last updated, the resource ID it's working on (a room or user), the structured result it returned once finished, and an error message if it failed.
+
+Status shows as a coloured chip:
+
+| Status | Chip | Meaning |
+|---|---|---|
+| Scheduled | grey | Queued, waiting to start |
+| Active | blue | Running now |
+| Complete | green | Finished successfully |
+| Cancelled | amber | Stopped before it finished |
+| Failed | red | Hit an error and didn't complete |
+
+Four filters narrow the list: **Status** as a dropdown, **Action** and **Resource ID** as free text, and **Before date**, a date-and-time picker that limits the list to tasks last updated at or before the moment you pick. Reach for them to chase a stuck job (status active, running longer than it should), confirm a purge landed (action `purge_history`, status complete, matching resource ID), or read the error on one that failed.
 
 ---
 
-**See also:** [Media management](./media.md) · [Documentation index](./README.md)
+See also: [Media management](./media.md) · [Room management](./room-management.md) · [User management](./user-management.md) · [Documentation index](./README.md)

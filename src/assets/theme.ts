@@ -15,7 +15,7 @@ const typography: ThemeOptions["typography"] = {
 
 const shape = { borderRadius: 8 };
 
-// react-admin's default theme invariants — required for proper form field sizing
+// react-admin's default theme invariants: required for proper form field sizing
 const raInvariants: ThemeOptions["components"] = {
   MuiAutocomplete: {
     defaultProps: {
@@ -80,7 +80,7 @@ const buttonShimmer = keyframes`
   100% { transform: translateX(200%) skewX(-15deg); }
 `;
 
-// Focus ring using primary color — keyboard-only via :focus-visible
+// Focus ring using primary color: keyboard-only via :focus-visible
 const focusRing = (color: string) => ({
   "&:focus-visible": {
     outline: "none",

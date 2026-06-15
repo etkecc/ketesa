@@ -1,52 +1,31 @@
-# 🤖 System / Appservice-managed Users
+# System and appservice-managed users
 
-Matrix bridges work by creating "puppet" accounts for every bridged user — a Telegram bridge, for example, will have one Matrix account for every Telegram contact that participates in bridged rooms. These accounts are entirely managed by the bridge appservice. Accidentally editing, deactivating, locking, or resetting the password of a puppet account will break the bridge for that user, often silently.
+Matrix bridges work by creating a puppet account for every user they bridge: a Telegram bridge spins up one Matrix account per Telegram contact in a bridged room, and the bridge's appservice owns all of them. Edit, deactivate, lock, or reset the password on one of those puppets and you break the bridge for that user, often silently.
 
-Ketesa lets you define a list of MXID patterns to mark as appservice-managed. Once marked, these accounts are **protected from destructive changes** while still allowing harmless cosmetic edits (display name and avatar).
+`asManagedUsers` is a list of MXID patterns that marks matching accounts as appservice-managed. A marked account is protected from destructive changes while staying open to the harmless cosmetic ones, so you can still fix a display name or avatar without risking the bridge.
 
-**Protected operations** (blocked for system-managed users):
-- Deactivating or erasing the account
-- Locking / shadow-banning
+Blocked on a managed account:
+
+- Deactivating or erasing it
+- Locking, suspending, or shadow-banning
 - Resetting the password
 - Changing admin status
+- Removing devices and sessions
 
-**Always allowed** (safe for bridges):
-- Updating display name
-- Updating avatar
+Display name and avatar stay editable, since neither touches the bridge. There's also one deliberate exception to the blocking: if a managed account has already been locked, deactivated, or erased, whether from a client app or any other path, Ketesa still lets you switch it back to active. The protection exists to stop you from breaking a working bridge, not to stop you from repairing one that's already broken.
 
-> 💡 **Recovery:** If a system-managed user was locked, deactivated, or erased by mistake (e.g., from a client app or using any other way), Ketesa will still allow you to restore it to an active state.
+## Filtering
 
-## 🔍 Filtering
+With `asManagedUsers` set, a System users filter appears in the user list: exclude managed users from the view, or show only them. Matching runs in the browser against the configured patterns, and results are cached so a large user list stays responsive.
 
-When `asManagedUsers` is configured, a **System users** filter appears in the users list. It allows you to:
+## Configuration
 
-- **Exclude system** — hide system/appservice-managed users from the list
-- **Only system** — show only system/appservice-managed users
+The examples below mark the [Telegram bridge (mautrix-telegram)](https://github.com/mautrix/telegram), [Slack bridge (mautrix-slack)](https://github.com/mautrix/slack), and [Baibot](https://github.com/etkecc/baibot) accounts on the `example.com` homeserver as appservice-managed. They show both shapes you'll need: pinning one specific MXID (Baibot) and matching every puppet of a bridge (the Telegram and Slack patterns).
 
-The filtering is performed client-side with cached regex results for optimal performance.
-
-## ⚙️ Configuration
-
-The examples below contain the configuration settings to mark [Telegram bridge (mautrix-telegram)](https://github.com/mautrix/telegram), [Slack bridge (mautrix-slack)](https://github.com/mautrix/slack), and [Baibot](https://github.com/etkecc/baibot) users of `example.com` homeserver as appservice-managed users. This illustrates the options to protect both specific MXIDs (as in the Baibot example) and all puppets of a bridge (as in the Telegram and Slack examples).
-
-[Configuration options](config.md)
-
-### config.json
+In a standalone `config.json`:
 
 ```json
-"asManagedUsers": [
-  "^@baibot:example\\.com$",
-  "^@slackbot:example\\.com$",
-  "^@slack_[a-zA-Z0-9\\-]+:example\\.com$",
-  "^@telegrambot:example\\.com$",
-  "^@telegram_[a-zA-Z0-9]+:example\\.com$"
-]
-```
-
-### `/.well-known/matrix/client`
-
-```json
-"cc.etke.ketesa": {
+{
   "asManagedUsers": [
     "^@baibot:example\\.com$",
     "^@slackbot:example\\.com$",
@@ -56,3 +35,23 @@ The examples below contain the configuration settings to mark [Telegram bridge (
   ]
 }
 ```
+
+In `/.well-known/matrix/client`, under the `cc.etke.ketesa` key:
+
+```json
+{
+  "cc.etke.ketesa": {
+    "asManagedUsers": [
+      "^@baibot:example\\.com$",
+      "^@slackbot:example\\.com$",
+      "^@slack_[a-zA-Z0-9\\-]+:example\\.com$",
+      "^@telegrambot:example\\.com$",
+      "^@telegram_[a-zA-Z0-9]+:example\\.com$"
+    ]
+  }
+}
+```
+
+---
+
+See also: [Configuration](./config.md) · [User management](./user-management.md) · [Documentation index](./README.md)

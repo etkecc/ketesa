@@ -1,374 +1,156 @@
-# 🏠 Room Management
+# Room management
 
-Ketesa gives you deep visibility and control over every room on your server. You can inspect content and structure, take moderation actions, manage memberships, and dig into low-level state — all from the Rooms section of the UI.
+The Rooms section is where you inspect and moderate every room on your server: block an abuser's room, delete it, purge old history, add or promote a user, or dig through a room's raw state and message timeline. Most of it is safe to click around in. The destructive actions are not, and two of them do less than their names suggest, so read those before you reach for them.
 
----
+Deleting a room does **not** block it by default. Blocking is a checkbox in the delete dialog, off unless you tick it, so a deleted room's ID stays open and can be rejoined or recreated unless you ask for the block. Purging history cannot be undone, and it is a separate action from deleting. The interface does not make the dangerous actions look any different from the safe ones.
 
-## ✨ Overview
+Unlike user management, none of this changes with your auth mode. Every room action calls the Synapse admin API directly and behaves identically whether you run native Synapse or Matrix Authentication Service (MAS).
 
-| Capability | Where |
-|-----------|-------|
-| Block / unblock rooms | List toolbar, bulk action, Show toolbar |
-| Publish / unpublish from room directory | Bulk action, Show toolbar |
-| Delete rooms | Bulk action, Show toolbar |
-| Purge room history | Show toolbar |
-| Join a user to a room | Show toolbar |
-| Assign a room admin | Show toolbar, Members tab |
-| Browse room members | Members tab |
-| View raw room state | State tab |
-| Inspect forward extremities | Forward Extremities tab |
-| Browse and filter room history | Messages tab |
-| Navigate Space room trees | Hierarchy tab (Space rooms only) |
-| Manage room media | Media tab — see [Media management](./media.md) |
+## Contents
 
----
+- [The room list](#the-room-list)
+- [Blocking a room](#blocking-a-room)
+- [Publishing to the room directory](#publishing-to-the-room-directory)
+- [Deleting a room](#deleting-a-room)
+- [Purging history](#purging-history)
+- [Adding and promoting users](#adding-and-promoting-users)
+- [The detail view](#the-detail-view)
+- [Messages](#messages)
+- [Hierarchy](#hierarchy)
 
-## 🔧 Room Actions
+## The room list
 
-All actions are available from the room detail view (**Rooms → click a room → Show**). Some are also available as bulk actions from the rooms list.
+Rooms lists every room your server knows about, blocked or not. Select rows with the checkboxes to act on several at once: the bulk bar carries block, unblock, publish, unpublish, delete media, and delete room. Most single-room actions live in the detail view instead, reached by clicking a row.
 
----
+One action does not need you to open a room at all: **Block room by ID** in the list toolbar takes a full room ID and blocks it directly, which is the fast path when you have the ID from a report but the room isn't in front of you.
 
-### 🚫 Block / Unblock
+## Blocking a room
 
-**Block** prevents any user from joining the room. Users already in the room are not affected immediately, but no new joins are allowed. Blocked rooms remain visible to admins.
+Blocking stops new joins. Members already in the room stay where they are; they just can't be joined by anyone new, and blocked rooms remain visible to you in the list. The toolbar button reads **Block** or **Unblock** depending on the room's current state, and unblocking reverses it. Blocking from the bulk bar works the same way across a selection, and there's a matching bulk **Unblock**.
 
-**Unblock** reverses the block and allows joins again.
+Blocking is not removal. The members are still there and still talking. If you want them out and the room sealed, that's **Delete room**, below.
 
-> ⚠️ Blocking a room does not remove existing members. Use **Delete room** if you want to remove members and prevent further access entirely.
+## Publishing to the room directory
 
-**How to block a room:**
-1. Open the room detail view.
-2. Click **Block** in the toolbar. A confirmation dialog shows the room name.
-3. Confirm. The toolbar button changes to **Unblock**.
+Publishing makes a room visible in your server's public room directory (the list served at `/_matrix/client/v3/publicRooms`); unpublishing hides it again. The toolbar in a room's detail view shows whichever action is relevant for that room, and both are available as bulk actions over a selection.
 
-**How to block by room ID (without opening the room):**
-1. In the **Rooms** list, click the **Block room by ID** button in the toolbar.
-2. Enter the full room ID (e.g. `!abc123:example.com`).
-3. Confirm.
+## Deleting a room
 
-**How to bulk-block rooms:**
-1. Select one or more rooms in the list using the checkboxes.
-2. Click **Block** in the bulk actions bar.
+Deleting kicks every member, removes the room from your server, and runs in the background for large rooms (you can close the dialog and let it finish; the action reports when it's done). It is irreversible, and the dialog asks you to confirm.
 
----
+What it does not do, despite what you might assume: it does not block the room, and it does not purge event history. **Block** is a checkbox in the delete dialog, off by default, so unless you tick it the deleted room's ID is left open and the same room can be recreated or rejoined. Purging is a separate action entirely (below). So when you're removing an abuse room and you want it to stay gone, tick **Block** in the delete dialog, and run **Purge history** first if the content itself needs to be erased.
 
-### 📋 Publish / Unpublish from Room Directory
+Delete is also available as a bulk action.
 
-Makes a room visible (or invisible) in the public room directory served at `/_matrix/client/v3/publicRooms`.
+## Purging history
 
-**How to publish / unpublish:**
-1. Open the room detail view.
-2. Click **Publish to room directory** or **Unpublish from room directory** in the toolbar.
+Purging deletes all events in a room from before a chosen moment, which is how you reclaim storage or honour a retention policy without touching the room itself. The room and its membership are untouched; only the event history before the cutoff goes, and it does not come back.
 
-**Bulk:**
-1. Select rooms in the list.
-2. Click **Publish to room directory** or **Unpublish from room directory** in the bulk actions bar.
+The dialog has two inputs:
 
----
+| Input | What it does |
+|---|---|
+| **Purge events before** | The date/time cutoff. Everything before this moment is deleted. |
+| **Also delete events sent by local users** | Off by default. When on, events from your own users are purged too, not just events received from other servers. |
 
-### 🗑️ Delete Room
+Large purges run in the background. The dialog shows progress while it works, and if you close the dialog mid-purge it tells you the purge continues server-side, so closing the window doesn't cancel it.
 
-Permanently removes the room. All members are kicked, the room is blocked, and (optionally) local event data is purged.
+## Adding and promoting users
 
-> ⚠️ This action is irreversible. The dialog asks for confirmation before proceeding.
+Two actions put a user into a room or hand them control of it. Both take a full Matrix ID (`@user:server`) and reject anything that isn't one.
 
-**How to delete a room:**
-1. Open the room detail view.
-2. Click **Delete room** in the toolbar.
-3. Confirm the deletion in the dialog.
+**Add user** force-joins any Matrix user to the room, local or federated, as if they had accepted an invite. It's in the room's detail toolbar; the confirm button reads **Add**.
 
-**How to bulk-delete rooms:**
-1. Select rooms in the list.
-2. Click **Delete room** in the bulk actions bar.
+**Assign admin** gives a user the room's highest power level. It's available both in the detail toolbar and above the Members tab; the confirm button reads **Make admin**. One prerequisite the dialog notes and the API enforces: a local user who is already an admin of the room must exist for this to work, because the server promotes through that existing admin. If the room has no local admin to act through, the call fails.
 
----
-
-### 📜 Purge History
-
-Deletes all events in the room before a specified date. Useful for removing old content to reclaim storage or comply with retention policies.
-
-| Option | Description |
-|--------|-------------|
-| **Purge events before** | Date/time cutoff — all events before this moment are deleted |
-| **Also delete events sent by local users** | When enabled, events from users on your homeserver are also purged (not just remote events) |
-
-> ⚠️ Purged events cannot be recovered. The room itself and its members are not affected — only the event history is removed.
-
-> 📝 Large rooms may take time to purge. The dialog shows a progress indicator and notes that you can safely close the window while the purge runs in the background.
-
-**How to purge room history:**
-1. Open the room detail view.
-2. Click **Purge history** in the toolbar.
-3. Set the **Purge events before** date/time.
-4. Optionally enable **Also delete events sent by local users**.
-5. Confirm. The dialog shows progress until the purge completes.
-
----
-
-### 👤 Join User to Room
-
-Joins any Matrix user (from your server or a federated server) to the room as if they had been invited and accepted.
-
-**How to join a user:**
-1. Open the room detail view.
-2. Click **Join user** in the toolbar.
-3. Enter the full MXID of the user (e.g. `@alice:example.com`).
-4. Click **Join**.
-
----
-
-### 👑 Assign Room Admin
-
-Grants a user the highest power level in the room, making them a room administrator.
-
-**How to assign a room admin:**
-1. Open the room detail view.
-2. Click **Assign admin** in the toolbar (or in the **Members** tab toolbar).
-3. Enter the full MXID of the user to promote.
-4. Click **Make admin**.
-
----
-
-## 📑 Room Detail Tabs
+## The detail view
 
 | Light |
 |-------|
-| ![Room View (light)](./screenshots/light/rooms-view.webp) |
+| ![Room detail view](./screenshots/light/rooms-view.webp) |
 
-Open a room and use the tabs to inspect different aspects of it.
+Click a room to open its detail view, a set of tabs that runs from a plain summary down to the room's raw event graph. Regular rooms show six tabs; Space rooms add a seventh.
 
----
+The first tab, **Basic**, is the at-a-glance summary: avatar and name, room ID and canonical alias, topic, whether the room is encrypted, federatable and published, its version and type, the join rule, guest access and history-visibility settings, member and device counts, and the room's creator (linked to their user page).
 
-### 👥 Members Tab
+**Members** is who's in the room right now, and where you go to inspect a specific member or hand one of them admin. A toggle above the list, **Local members only**, filters out federated members so you see just your own users.
 
-Shows all users currently in the room with their account status.
-
-| Column | Description |
-|--------|-------------|
+| Column | Meaning |
+|---|---|
 | Avatar | User avatar |
-| User ID | Matrix ID |
+| User ID | The member's Matrix ID |
 | Display name | Current display name |
-| Is guest | Whether the account is a guest account |
-| Deactivated | Whether the account has been deactivated |
-| Locked | Whether the account is locked (MAS) |
+| Is guest | Whether the account is a guest |
+| Deactivated | Whether the account is deactivated |
+| Locked | Whether the account is locked (populated under MAS) |
 | Erased | Whether the account has been erased |
 
-> 💡 Click any user row to navigate to their full user detail page. The **Assign admin** button above the list promotes a user to room admin.
+Click any member to jump to their user page. The **Assign admin** button sits above the list.
 
----
+**State** is the room's raw state events: the configuration behind its power levels, join rules, history visibility, and everything else about how it behaves. Reach for it when a room is acting strangely and you need to read what's actually set rather than trust the summary.
 
-### 📊 State Tab
-
-Shows the current raw state events of the room — the collection of events that define the room's settings, membership, permissions, and other configuration.
-
-| Column | Description |
-|--------|-------------|
-| Type | Matrix event type (e.g. `m.room.power_levels`, `m.room.join_rules`) |
+| Column | Meaning |
+|---|---|
+| Type | Event type, e.g. `m.room.power_levels`, `m.room.join_rules` |
 | Origin server timestamp | When the state event was set |
-| Content | Raw JSON content of the state event |
+| Content | Raw JSON content of the event |
 | Sender | The user who set this state |
 
-> 💡 Use the State tab to inspect power levels, join rules, history visibility, and other room settings in their raw form — useful when diagnosing unusual room behaviour.
+Click a row to look the event up in full.
 
----
+**Forward extremities** are the leading edges of the room's event graph, the most recent events with no known successors. A healthy room has one or two. Hundreds or thousands means the event graph has fragmented, which degrades performance; purging old history is the usual remedy.
 
-### ⏭️ Forward Extremities Tab
+| Column | Meaning |
+|---|---|
+| ID | Event ID of the extremity (click to look it up) |
+| State group | The state group for this extremity |
 
-Shows the **forward extremities** of the room's event DAG — the most recent events in the room that have no known successors. Under normal circumstances a room should have one or two forward extremities.
+Two more columns, **Depth** and **Received timestamp**, are hidden by default; add them from the column picker if you need them.
 
-| Column | Description |
-|--------|-------------|
-| ID | Event ID of the extremity |
-| Received timestamp | When the server received this event |
-| Depth | Position in the event DAG |
-| State group | The state group associated with this extremity |
+**Media** covers the room's media files, with per-file deletion and bulk quarantine. See [Media management](./media.md) for the full picture.
 
-> ⚠️ A large number of forward extremities (hundreds or thousands) is a sign of DAG fragmentation, which can degrade room performance significantly. In this case, consider using the **Purge history** action to clean up old events, or consult the Synapse documentation on forward extremity issues.
-
----
-
-### 💬 Messages Tab
-
-Paginated room history with rich filtering and jump-to-date navigation. See [Messages Viewer](#-messages-viewer) below.
-
----
-
-### 🌳 Hierarchy Tab
-
-Available only on **Space** rooms. Shows the full nested room tree. See [Room Hierarchy](#-room-hierarchy) below.
-
----
-
-### 🖼️ Media Tab
-
-Shows all media files associated with the room. Supports per-file deletion and bulk quarantine. See [Media management](./media.md) for full details.
-
----
-
-## 💬 Messages Viewer
+## Messages
 
 | Light | Dark |
 |-------|------|
-| ![Room Messages (light)](./screenshots/light/rooms-view-messages.webp) | ![Room Messages (dark)](./screenshots/dark/rooms-view-messages.webp) |
+| ![Room messages (light)](./screenshots/light/rooms-view-messages.webp) | ![Room messages (dark)](./screenshots/dark/rooms-view-messages.webp) |
 
-The **Messages** tab shows the paginated event history of a room. Each event card displays:
+The **Messages** tab is the room's event timeline, loaded 20 at a time and opening at the most recent end. Each card shows the sender, the timestamp (the event's `origin_server_ts`, in your browser's locale), the event type, and a content preview: the message body, a membership change, a display-name or room-name change, or, for anything without a simple body, the raw JSON in a monospace block. Every card carries its event ID inline as a clickable link.
 
-| Field | Description |
-|-------|-------------|
-| Sender | The Matrix user ID that sent the event |
-| Timestamp | Server-origin timestamp (`origin_server_ts`), formatted in the browser's locale |
-| Event type | The Matrix event type (e.g. `m.room.message`) |
-| Content preview | The event body, membership change, display name, or room name if available; otherwise the raw JSON content |
+**Load older** and **Load newer** page 20 events at a time in either direction from where you are.
 
-Events are loaded 20 at a time. The viewer opens at the most recent end of the timeline.
+### Filtering
 
-> 📝 Events without a simple body field are shown as formatted JSON in a monospace block, including the `event_id`.
+The **Filters** button opens a panel; when any filter is active, the button shows how many. Basic filtering covers two fields: **Event types** (pick from a long list of common Matrix types, or type your own and press Enter) and **Senders** (Matrix IDs). Under **Advanced filters** you also get **Exclude event types**, **Exclude senders**, and **Contains URL** (Any, with-URL-only, or without-URL-only). Basic and advanced combine, so you can show only `m.room.message` events while excluding one noisy bot.
 
----
+**Apply** reloads with the current filters; **Clear** resets them and appears once at least one filter is set.
 
-### 🔍 Filters
+### Jump to date
 
-Click the **Filters** button to expand the filter panel. The active filter count is shown in the button label when any filters are set.
+Inside the same Filters panel, **Jump to date** navigates straight to a point in the room's history. The **Direction** selector decides which event anchors the jump: **Backward** lands on the closest event at or before the timestamp, **Forward** on the closest at or after. The view re-centres on the matching event with it highlighted, and you can page in either direction from there. If nothing exists near the timestamp, the viewer says so and clears the list.
 
-#### Basic filters
-
-| Filter | What it does |
-|--------|-------------|
-| **Event types** | Show only events whose `type` matches one or more values. Choose from common types or type a custom value and press Enter. |
-| **Senders** | Show only events sent by the listed Matrix user IDs. |
-
-Common event types offered by the autocomplete:
-
-`m.room.message`, `m.room.member`, `m.room.name`, `m.room.topic`, `m.room.avatar`, `m.room.power_levels`, `m.room.join_rules`, `m.room.history_visibility`, `m.room.canonical_alias`, `m.room.encryption`, `m.room.redaction`, `m.room.third_party_invite`, `m.room.pinned_events`, `m.sticker`, `m.reaction`
-
-#### Advanced filters
-
-Click **Advanced filters** to expand the secondary filter section.
-
-| Filter | What it does |
-|--------|-------------|
-| **Exclude event types** | Hide events whose `type` matches any of the listed values. |
-| **Exclude senders** | Hide events sent by the listed Matrix user IDs. |
-| **Contains URL** | Filter by whether events contain a URL. Options: **Any** (no filter), **With URL only**, **Without URL only**. |
-
-Click **Apply** to reload with the current filters. Click **Clear** to reset all filters.
-
-> 💡 Basic and advanced filters combine — for example, show only `m.room.message` events while excluding a specific bot sender.
-
----
-
-### 📅 Jump to Date
-
-The **Jump to date** field lets you navigate directly to any point in the room's history.
-
-The **Direction** selector controls which event is used as the anchor:
-
-| Value | Meaning |
-|-------|---------|
-| **Backward** | Find the closest event at or before the given timestamp |
-| **Forward** | Find the closest event at or after the given timestamp |
-
-After jumping, the target event is highlighted and the view centres on it. You can continue paginating in either direction from that point.
-
-> ⚠️ If no event exists near the specified timestamp, the viewer shows a warning and the message list is cleared.
-
----
-
-### ⏩ Pagination
-
-| Control | What it does |
-|---------|-------------|
-| **Load newer** | Appends the next 20 newer events |
-| **Load older** | Appends the next 20 older events |
-
----
-
-### 📖 How to browse room history
-
-1. Open **Rooms** in the left navigation and click a room.
-2. Select the **Messages** tab.
-3. The viewer loads the most recent 20 events automatically.
-4. Click **Load older** to go further back, or **Load newer** to move forward.
-
-### 📅 How to jump to a specific date
-
-1. Open the **Messages** tab.
-2. Click **Filters** to expand the filter panel.
-3. Fill in the **Jump to date** field.
-4. Choose a **Direction** — **Backward** to land just before, **Forward** to land just after.
-5. Click **Jump to date**.
-6. The viewer reloads centred on the nearest matching event, highlighted.
-
-### 🔎 How to filter by event type or sender
-
-1. Open the **Messages** tab and click **Filters**.
-2. In **Event types**, select or type the type(s) you want (press Enter for custom values).
-3. In **Senders**, type a Matrix user ID and press Enter.
-4. To exclude instead of include, expand **Advanced filters** and use **Exclude event types** / **Exclude senders**.
-5. Click **Apply**. The **Filters** button shows the count of active filters.
-6. Click **Clear** to reset.
-
----
-
-## 🌳 Room Hierarchy
+## Hierarchy
 
 | Light | Dark |
 |-------|------|
-| ![Room Hierarchy (light)](./screenshots/light/rooms-view-hierarchy.webp) | ![Room Hierarchy (dark)](./screenshots/dark/rooms-view-hierarchy.webp) |
+| ![Room hierarchy (light)](./screenshots/light/rooms-view-hierarchy.webp) | ![Room hierarchy (dark)](./screenshots/dark/rooms-view-hierarchy.webp) |
 
-The **Hierarchy** tab is available only on **Space** rooms (`room_type: m.space`). It shows the full nested structure as an expandable tree.
+Space rooms (`room_type: m.space`) get one extra tab, **Hierarchy**, which draws the Space's nested tree of child rooms. Regular rooms don't have it.
 
-> 📝 Regular (non-Space) rooms do not have a Hierarchy tab.
+Each node in the tree shows:
 
----
-
-### 🗂️ What is shown per room in the tree
-
-| Field | Description |
-|-------|-------------|
-| Name | Display name; falls back to the raw `room_id` if no name is set |
-| Room type chip | **Space** or **Room** — shown when `room_type` is set |
+| Field | Meaning |
+|---|---|
+| Name | Display name, falling back to the raw room ID when none is set |
+| Type | A **Space** or **Room** chip, when the room's type is known |
 | Member count | Number of joined members; hidden when zero |
-| Suggested badge | Green **Suggested** chip when the parent Space has marked this child as suggested |
-| Join rule chip | The room's join rule (e.g. `public`, `invite`, `knock`) |
+| Suggested | A green **Suggested** chip when the parent Space marks the child as suggested |
+| Join rule | The room's join rule, e.g. `public`, `invite`, `knock` |
 
-Rooms referenced in the hierarchy but not returned by the API are shown as greyed-out placeholder nodes.
+Rooms referenced in the hierarchy that the API doesn't return appear as greyed-out placeholder nodes you can't click into.
 
----
-
-### ⚙️ Max Depth
-
-The **Max depth** selector controls how many levels of nesting are fetched.
-
-| Value | Meaning |
-|-------|---------|
-| **Unlimited** | Full hierarchy, no depth limit (default) |
-| 1–10 | Limit to that many levels of nesting |
-
-> 💡 For very large Spaces, a lower max depth (e.g. 2 or 3) speeds up loading and reduces noise.
+The **Max depth** selector controls how many levels are fetched: **Unlimited** (the default) or a fixed 1, 2, 3, 5, or 10. For a large Space, a lower depth loads faster and cuts noise. The first two levels expand on their own; click a node with children to toggle it, click a leaf to open its detail view, and use **Refresh** after server-side changes. If the tree is paginated, a **Load more** button appears at the bottom.
 
 ---
 
-### 🔄 Expand / Collapse and Navigation
-
-- The first two levels expand automatically.
-- Click a node with children to toggle it.
-- Click a leaf room to navigate to its detail view.
-- Click **Refresh** to reload the hierarchy.
-- If the hierarchy is paginated, a **Load more** button appears at the bottom.
-
----
-
-### 🧭 How to explore a Space hierarchy
-
-1. Open **Rooms** and find the Space room.
-2. Click it to open the detail view, then select the **Hierarchy** tab.
-3. The tree loads with the first two levels expanded.
-4. Expand branches as needed. Adjust **Max depth** for deeper or shallower traversal.
-5. Click **Refresh** after making server-side changes.
-6. Click any leaf room to navigate to its detail view.
-
----
-
-**See also:** [Media management](./media.md) · [User management](./user-management.md) · [Documentation index](./README.md)
+See also: [Media management](./media.md) · [User management](./user-management.md) · [Federation](./federation.md) · [Documentation index](./README.md)

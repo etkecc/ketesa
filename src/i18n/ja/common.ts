@@ -105,7 +105,6 @@ const common: Record<string, any> = {
         header: "パスワード",
         all_passwords_present: "全てのエントリーにパスワードがあります",
         count_passwords_present: "%{smart_count}個のエントリーにパスワードがあります",
-        use_passwords: "CSVファイルのパスワードを使用",
       },
       upload: {
         header: "CSVファイルを送信",
@@ -122,7 +121,6 @@ const common: Record<string, any> = {
         successful: "%{smart_count}個のエントリーをインポートしました",
         skipped: "%{smart_count}個のエントリーをスキップしました",
         download_skipped: "スキップしたエントリーをダウンロード",
-        with_error: "%{smart_count}個のエントリーでエラーが発生しました",
         simulated_only: "シミュレーションのみ実行",
       },
     },

@@ -98,7 +98,7 @@ export { clearSystemUsersScanCache, clearReverseSearchScanCache } from "./scan";
 
 /**
  * Initialize all flag-dependent resources and patch them into resourceMap.
- * Reads the cached MAS flag synchronously — no HTTP calls needed.
+ * Reads the cached MAS flag synchronously; no HTTP calls needed.
  * Add new MAS-dependent resources here as they are introduced.
  */
 export const initResources = () => {
@@ -262,7 +262,7 @@ const baseDataProvider: SynapseDataProvider = {
     const { field, order } = params.sort as SortPayload;
     const from = (page - 1) * perPage;
 
-    // Shared filter param object — avoids repeating 16 keys across multiple buildSynapseListQuery calls.
+    // Shared filter param object; avoids repeating 16 keys across multiple buildSynapseListQuery calls.
     const synapseFilterParams = {
       user_id,
       search_term,
@@ -286,7 +286,7 @@ const baseDataProvider: SynapseDataProvider = {
     const isReverseSearch = resource === "users" && typeof name === "string" && name.startsWith("!");
 
     // Allow resource to override getList entirely (e.g. MAS users Synapse-first sort)
-    // Skip when reverse search or system_users scan is active — handled below for both modes.
+    // Skip when reverse search or system_users scan is active; handled below for both modes.
     if (!isReverseSearch && system_users == null && res.getList) {
       const result = await res.getList({
         pagination: params.pagination as PaginationPayload,
@@ -361,7 +361,7 @@ const baseDataProvider: SynapseDataProvider = {
         ? `${synapseBaseUrl}/_synapse/admin/v3/users`
         : synapseBaseUrl + (res.listPath || res.path);
 
-      // Use Synapse user map/data/total — both modes scan the same Synapse v3 API
+      // Use Synapse user map/data/total; both modes scan the same Synapse v3 API
       const scanMap = synapseResourceMap.users.map;
       const scanDataKey = synapseResourceMap.users.data;
       const scanTotal = synapseResourceMap.users.total;
@@ -470,7 +470,7 @@ const baseDataProvider: SynapseDataProvider = {
     if (res.getOne) {
       const data = await Promise.all(
         params.ids.map(async id => {
-          // external/federated users are not on this homeserver — return stub as in Synapse path
+          // external/federated users are not on this homeserver; return stub as in Synapse path
           if (homeserver && resource === "users" && !(id as string).endsWith(homeserver)) {
             return { id, name: id } as RaRecord;
           }
@@ -488,7 +488,7 @@ const baseDataProvider: SynapseDataProvider = {
     const data = await Promise.all(
       params.ids.map(async id => {
         // Federated/external users can't be queried via the Synapse admin API.
-        // Return a minimal stub without going through res.map — this prevents res.map
+        // Return a minimal stub without going through res.map; this prevents res.map
         // from setting boolean fields like is_guest: false on records that have no real data.
         if (homeserver && resource === "users" && !(id as string).endsWith(homeserver)) {
           return { id, name: id } as RaRecord;
@@ -657,8 +657,7 @@ const baseDataProvider: SynapseDataProvider = {
 
     const responses = await Promise.all(
       params.ids.map(id => {
-        params.data.id = id;
-        const cre = res.create(params.data);
+        const cre = res.create({ ...params.data, id });
         const endpoint_url = homeserver + cre.endpoint;
         return jsonClient(endpoint_url, {
           method: cre.method,

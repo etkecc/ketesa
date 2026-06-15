@@ -1,11 +1,16 @@
-# 📦 Availability
+# Availability
 
-This is the canonical reference for obtaining Ketesa.
+The canonical reference for where to get Ketesa.
 
-> ⚠️ Community-maintained and third-party entries may lag behind official releases.
-> When in doubt, prefer the official release tarballs, containers, or the hosted instance.
+> **Note:** community-maintained and third-party entries can lag behind official releases. When in doubt, prefer the official release tarballs, containers, or the hosted instance.
 
-## ✅ Official channels
+## Self-hosting or managed?
+
+Ketesa is open source ([Apache-2.0](https://github.com/etkecc/ketesa/blob/main/LICENSE)) and fully self-hostable; self-hosted and managed run the same admin UI. If you want full control of your stack and no recurring cost, and you have the capacity to run a Matrix server yourself, self-hosting is the right call. This repo plus the guides in the [documentation index](./README.md) are everything you need.
+
+[etke.cc](https://etke.cc), the company that maintains Ketesa, [matrix-docker-ansible-deploy](https://github.com/spantaleev/matrix-docker-ansible-deploy), and the [MASH playbook](https://github.com/mother-of-all-self-hosting/mash-playbook), also runs Matrix hosting as a managed service. It handles the operations for you (monitoring, updates, backups, TLS, support) and adds the [etke.cc-exclusive features](./README.md#etkecc-exclusive-features): live server monitoring, one-click server actions, in-app billing and support. Those need the etke.cc platform behind them, which is why they aren't part of the self-hosted build. Choose managed hosting if you'd rather not run the infrastructure yourself.
+
+## Official channels
 
 | Channel | Type | Maintainer | Best for | Notes |
 |---|---|---|---|---|
@@ -28,7 +33,7 @@ Ketesa publishes two static distributions:
 For custom prefixes other than `/admin`, build from source with `yarn build --base=/your-prefix/`
 or pass the `BASE_PATH` Docker build argument.
 
-## 🌙 Nightly and development builds
+## Nightly and development builds
 
 To get the latest unreleased changes:
 
@@ -37,19 +42,19 @@ To get the latest unreleased changes:
 - Download `dist-root` or `dist-subpath-admin` from the latest successful [GitHub Actions run](https://github.com/etkecc/ketesa/actions/workflows/workflow.yml)
 - Build the `main` branch from [source](https://github.com/etkecc/ketesa)
 
-## 🐧 Distro packages
+## Distro packages
 
 | Channel | Type | Maintainer | Best for | Notes |
 |---|---|---|---|---|
 | [Nixpkgs](https://search.nixos.org/packages?channel=unstable&show=ketesa) | Package index | [@Defelo](https://github.com/Defelo) | Nix and NixOS users | |
 | [YunoHost](https://apps.yunohost.org/app/ketesa) | App catalog package | [@Josue-T](https://github.com/Josue-T) | YunoHost-based deployments | |
 
-## 🤝 Community-packaged options
+## Community-packaged options
 
 | Channel | Type | Maintainer | Best for | Notes |
 |---|---|---|---|---|
 | [IPFS](#ipfs) | Mirror / alternative delivery | [Fеnикs (@fenuks:sibnsk.net)](https://matrix.to/#/@fenuks:sibnsk.net) | Content-addressed distribution | See the [IPFS](#ipfs) section below for addresses |
-| [Arch Linux AUR](https://aur.archlinux.org/packages/synapse-admin-etke-git) | AUR package | [@drygdryg](https://github.com/drygdryg) | Arch users who prefer AUR packaging | Legacy package naming — maintained outside this repository |
+| [Arch Linux AUR](https://aur.archlinux.org/packages/synapse-admin-etke-git) | AUR package | [@drygdryg](https://github.com/drygdryg) | Arch users who prefer AUR packaging | Legacy package naming; maintained outside this repository |
 
 ## IPFS
 
@@ -61,10 +66,9 @@ To get the latest unreleased changes:
 **Archive:** `/ipns/ketesa-archive.sibnsk.net`
 (`dnslink` key `/ipns/k51qzi5uqu5dhxwc36sld1hn6jn935k71ww8rdyqomrnqcqucixy7re08qeu7z`)
 
-## 📝 Want your package listed?
+## Want your package listed?
 
-Open a pull request if you maintain a Ketesa package, mirror, or deployment integration — we welcome all distribution channels.
-Please include:
+If you maintain a Ketesa package, mirror, or deployment integration, open a pull request. We welcome all distribution channels. Please include:
 
 - the package or project link
 - whether it is official, community-maintained, or a third-party mirror

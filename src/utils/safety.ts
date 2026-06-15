@@ -25,7 +25,7 @@ export const encodeURLComponent = (str: string): string => {
  *
  * react-admin's translate() (from useTranslate) returns the key itself when no translation is found.
  * This helper detects that case and returns `fallback` instead, making it safe to call with any
- * dynamic key — enum values, server-provided strings, future unknown variants — without littering
+ * dynamic key (enum values, server-provided strings, future unknown variants) without littering
  * the UI with raw i18n key paths like "resources.rooms.enums.join_rules.restricted".
  *
  * Usage:

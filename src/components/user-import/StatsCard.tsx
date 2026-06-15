@@ -1,7 +1,5 @@
 import { Card, Paper, Stack, CardContent, CardHeader, Container, Typography } from "@mui/material";
 import { NativeSelect } from "@mui/material";
-import { FormControlLabel } from "@mui/material";
-import { Checkbox } from "@mui/material";
 import { useTranslate } from "ra-core";
 import { ChangeEventHandler } from "react";
 
@@ -12,17 +10,13 @@ const StatsCard = ({
   progress,
   importResults,
   useridMode,
-  passwordMode,
   onUseridModeChanged,
-  onPasswordModeChange,
 }: {
   stats: ParsedStats | null;
   progress: Progress;
   importResults: ImportResult | null;
   useridMode: string;
-  passwordMode: boolean;
   onUseridModeChanged: ChangeEventHandler<HTMLSelectElement>;
-  onPasswordModeChange: ChangeEventHandler<HTMLInputElement>;
 }) => {
   const translate = useTranslate();
 
@@ -80,14 +74,6 @@ const StatsCard = ({
                     ? translate("import_users.cards.passwords.all_passwords_present")
                     : translate("import_users.cards.passwords.count_passwords_present", stats.password)}
                 </Typography>
-                {stats.password > 0 && (
-                  <FormControlLabel
-                    control={
-                      <Checkbox checked={passwordMode} disabled={progress !== null} onChange={onPasswordModeChange} />
-                    }
-                    label={translate("import_users.cards.passwords.use_passwords")}
-                  />
-                )}
               </Stack>
             </CardContent>
           </Card>

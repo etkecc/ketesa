@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Form payload the mocked SimpleForm submits — set per test before clicking submit.
+// Form payload the mocked SimpleForm submits; set per test before clicking submit.
 let submitData: Record<string, any> = {};
 
 const createMock = vi.fn();
@@ -11,6 +11,9 @@ const masSetAdminMock = vi.fn();
 const masSetPasswordMock = vi.fn();
 const notifyMock = vi.fn();
 const redirectMock = vi.fn();
+
+// Captures every TextInput's props so a test can assert the username field is validated.
+const textInputProps: Record<string, any>[] = [];
 
 vi.mock("react-admin", () => ({
   Create: ({ children }: any) => <div>{children}</div>,
@@ -23,7 +26,10 @@ vi.mock("react-admin", () => ({
       </button>
     </div>
   ),
-  TextInput: () => null,
+  TextInput: (props: any) => {
+    textInputProps.push(props);
+    return null;
+  },
   BooleanInput: () => null,
   useCreate: () => [createMock],
   useDataProvider: () => ({ masSetAdmin: masSetAdminMock, masSetPassword: masSetPasswordMock }),
@@ -50,6 +56,8 @@ vi.mock("./Edit", () => ({
 }));
 
 import { UserCreate } from "./Create";
+// Mocked above: gives the same validateUser reference the component wires onto the field.
+import { validateUser } from "./Edit";
 
 const MAS_ID = "01HABCDEFULID";
 
@@ -63,12 +71,13 @@ const submit = async (data: Record<string, any>) => {
 beforeEach(() => {
   vi.clearAllMocks();
   submitData = {};
+  textInputProps.length = 0;
   createMock.mockResolvedValue({ id: "@alice:hs", mas_id: MAS_ID });
   masSetAdminMock.mockResolvedValue({ success: true });
   masSetPasswordMock.mockResolvedValue({ success: true });
 });
 
-describe("MASUserCreate — post-creation failure surfacing", () => {
+describe("MASUserCreate: post-creation failure surfacing", () => {
   it("set-password failure surfaces the server error and suppresses the success notification", async () => {
     masSetPasswordMock.mockResolvedValue({ success: false, error: "Password is too weak" });
 
@@ -76,7 +85,7 @@ describe("MASUserCreate — post-creation failure surfacing", () => {
 
     expect(notifyMock).toHaveBeenCalledWith("Password is too weak", { type: "error" });
     expect(notifyMock).not.toHaveBeenCalledWith("ra.notification.created", expect.anything());
-    // The user exists — admin still lands on the user page to recover.
+    // The user exists; admin still lands on the user page to recover.
     expect(redirectMock).toHaveBeenCalled();
   });
 
@@ -123,5 +132,17 @@ describe("MASUserCreate — post-creation failure surfacing", () => {
 
     expect(notifyMock).toHaveBeenCalledWith("admin boom; Password is too weak", { type: "error" });
     expect(notifyMock).not.toHaveBeenCalledWith("ra.notification.created", expect.anything());
+  });
+});
+
+describe("MASUserCreate username validation", () => {
+  it("wires validateUser onto the username field (the MAS path previously had none)", () => {
+    render(<UserCreate resource="users" />);
+
+    const usernameField = textInputProps.find(p => p.source === "username");
+    expect(usernameField).toBeDefined();
+    // Wiring check only: confirms the field carries the shared validator. The regex
+    // behaviour (rejecting @user:host) lives where validateUser is defined, in Edit.tsx.
+    expect(usernameField?.validate).toBe(validateUser);
   });
 });

@@ -7,7 +7,7 @@
 /**
  * Returns true when the issuer string is a well-formed HTTP(S) URL
  * with no query string or fragment (per RFC 8414 §2).
- * Does not enforce https — that is a deployment policy, not a format rule.
+ * Does not enforce https: that is a deployment policy, not a format rule.
  * (MAS rejects http: issuers in production via its own config; local-dev MAS
  * runs over http:, so format validation must accept it.)
  */

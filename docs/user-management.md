@@ -1,261 +1,137 @@
-# 👤 User Management
+# User management
+
+The user list and the per-user edit page are where you do the things that affect real accounts: log in as someone to debug their session, freeze an abuser, wipe an account on request. Most of it is routine. A few actions are not, and the interface does not make the dangerous ones look any different from the safe ones, so three things are worth knowing before you touch anything destructive.
+
+Logging in as a user mints an access token with that user's full privileges, and by default that token never expires. Erasing an account purges the user's messages and media from the server, and that does not come back. And the same "Delete" button does different things depending on your auth mode: on native Synapse it erases, under MAS it only deactivates.
+
+Ketesa works in two modes. Native Synapse authentication is the default. When `externalAuthProvider` is configured, Matrix Authentication Service (MAS) handles logins, an extra set of MAS panels appears on the edit page, and a few native controls swap out or disappear. Each section below flags where the mode changes the behaviour.
+
+## Contents
+
+- [The list](#the-list)
+- [Logging in as a user](#logging-in-as-a-user)
+- [Deactivating, erasing, and deleting](#deactivating-erasing-and-deleting)
+- [Shadow ban](#shadow-ban)
+- [Rate limits](#rate-limits)
+- [Experimental features](#experimental-features)
+- [Account data](#account-data)
+- [Server notices](#server-notices)
+- [MAS mode](#mas-mode)
+- [Bulk import](#bulk-import)
+
+## The list
 
 | Light | Dark |
 |-------|------|
-| ![Users List (light)](./screenshots/light/users-list.webp) | ![Users List (dark)](./screenshots/dark/users-list.webp) |
+| ![Users list (light)](./screenshots/light/users-list.webp) | ![Users list (dark)](./screenshots/dark/users-list.webp) |
 
-This guide covers all user management features available in Ketesa, from basic account control to advanced MAS-integrated session and email management.
+Search by display name or user ID with the box at the top. Tick the row checkboxes to bring up a bulk-action toolbar at the bottom of the list (send a server notice, or delete). The list toolbar also holds the CSV Import button for creating accounts in bulk, covered in [CSV import](./csv-import.md).
 
----
-
-## 📋 Contents
-
-- [Login as user](#-login-as-user)
-- [Deactivation vs erasure](#-deactivation-vs-erasure)
-- [Shadow ban](#-shadow-ban)
-- [Rate limits](#-rate-limits)
-- [Experimental features](#-experimental-features)
-- [Account data](#-account-data)
-- [Server notices](#-server-notices)
-- [MAS user management](#-mas-user-management)
-- [MAS Policy Data](#-mas-policy-data)
-- [Bulk user import](#-bulk-user-import)
-
----
-
-## 🔑 Login as user
+## Logging in as a user
 
 | Light | Dark |
 |-------|------|
-| ![User Edit (light)](./screenshots/light/users-edit.webp) | ![User Edit (dark)](./screenshots/dark/users-edit.webp) |
+| ![User edit (light)](./screenshots/light/users-edit.webp) | ![User edit (dark)](./screenshots/dark/users-edit.webp) |
 
-The **Login as user** button appears in the top toolbar of the user edit page (only when the user is not deactivated and MAS is not configured). Clicking it generates a short-lived access token scoped to that user account, allowing an administrator to act on their behalf — this is commonly called impersonation.
+The "Login as user" button sits in the top toolbar of the edit page. It shows up only in native Synapse mode, and only while the account is not deactivated. Clicking it generates an access token tied to that account and signs you in as them, which is how you reproduce a bug that only happens for one user, or check that a permission change looks right from their side.
 
-**When to use:**
+Be clear about what that token is. It carries the user's full privileges, and it does not expire on its own. There is an optional expiry toggle, but it is off by default, so unless you set it you have created a credential that can act as that person until you revoke it. Revoke it by logging out the moment the support task is done. Do not generate one, finish up, and walk away from the tab.
 
-- Reproducing a bug that only manifests for a specific account.
-- Providing hands-on support for a user who cannot access their account.
-- Verifying that a permission or room configuration change took effect from the user's perspective.
+Under MAS this button is gone, because MAS owns authentication. To act on a MAS user's behalf, reset their password or create a personal session for them (see [MAS mode](#mas-mode)).
 
-> ⚠️ The generated token carries the full privileges of the target user. Treat it as a sensitive credential: do not share it, do not store it, and revoke it (log out) as soon as the support task is complete.
+## Deactivating, erasing, and deleting
 
-> 📝 This feature is only available in native Synapse mode. When `externalAuthProvider` is set and MAS is active, use the MAS password reset or personal-session creation workflow instead.
+This is the destructive part of the page, and it has more edges than it looks. There is no single "danger zone"; the controls live in two places that behave differently.
 
----
+On the edit form there are two checkboxes:
 
-## 🚫 Deactivation vs erasure
+- **Deactivated** disables login, invalidates the user's access tokens, and removes them from their rooms. The account record and message history stay intact. This is reversible: uncheck Deactivated and set a new password to bring the account back.
+- **Erased** does everything Deactivate does and additionally asks Synapse to purge the user's messages and media. That purge is permanent. The deactivation can be undone; the content removal cannot.
 
-Ketesa exposes two levels of account termination. Both are accessible via the **Danger Zone** panel on the user edit page and via the bulk delete button on the user list.
+The Erased checkbox only becomes active once Deactivated is checked. If you then uncheck Erased on an account that was already erased, Ketesa also unchecks Deactivated, which reactivates the account record. The messages and media that were already purged do not come back. You get the account back, empty.
 
-| Action | What it does | Reversible? |
-|--------|-------------|-------------|
-| **Deactivate** | Disables login, invalidates all access tokens, and kicks the user from all rooms. The account record and message history are preserved. | ✅ Yes — re-enable by unchecking **Deactivated** and setting a new password. |
-| **Erase** | Performs deactivation and additionally requests that Synapse purge the user's messages and media from rooms (subject to server configuration). | ❌ No — message and media removal cannot be undone. |
+The **"Delete" button** is a separate path, and it is the one to be careful with, because what it does depends on your mode. It appears both in the edit-page toolbar and in the list's bulk-action toolbar:
 
-> ⚠️ The **Erased** checkbox only becomes active once **Deactivated** is checked. Unchecking **Erased** on an already-erased account will also uncheck **Deactivated**, effectively reactivating the account record (message content that was already purged is not restored).
+- On native Synapse, "Delete" erases. It deactivates the account and purges its content, the same permanent removal as the Erased checkbox. The confirmation dialog adds two options: also delete the user's media, and redact the user's events first (the redaction runs in the background, then the deletion completes). Do not read this button as "remove a row from a list." It wipes the person.
+- Under MAS, "Delete" only deactivates, leaving the media and redaction options hidden.
 
-> 📝 You cannot deactivate or erase your own admin account. Ketesa prevents this both in the single-user edit view and in bulk actions.
+So the same button, with the same label, is a permanent erase in one mode and a reversible deactivation in the other. Know which mode you are in before you click it.
 
----
+You cannot deactivate, erase, or delete your own admin account. Ketesa blocks that both on the edit form and in the bulk actions.
 
-## 👁️ Shadow ban
+## Shadow ban
 
-A shadow-banned user's outgoing messages are accepted by the server but never distributed to other users. From the banned user's perspective everything appears normal; other participants simply never receive their messages.
+A shadow-banned user can still send messages, and from their side everything looks normal, but the server quietly drops those messages instead of delivering them. It is the silent alternative to deactivation: useful for a spam or abuse account you want to mute without tipping them off, or to hold a moderation window open while you investigate.
 
-**When to use shadow banning instead of deactivation:**
+Toggle "Shadow banned" in the moderation section of the edit page and save. Turn it off the same way. Messages sent while the ban was on are not delivered retroactively.
 
-- Silencing a spam or abuse account without alerting the operator.
-- Giving a moderation window to investigate without provoking escalation.
+One caveat worth knowing, because it will mislead you otherwise: as of Synapse v1.149.1 the user-list filter for shadow-banned users is broken. It returns all users instead of only the banned ones, so it is disabled in the UI until upstream fixes it. The shadow-ban column in the list is accurate; only the filter is out.
 
-**How to apply:** On the user edit page, enable the **Shadow banned** toggle in the moderation section and save.
+## Rate limits
 
-**How to remove:** Disable the same toggle and save. The user's subsequent messages will be distributed normally; messages sent while shadow-banned are not retroactively delivered.
+On the Rate limits tab of the edit page, two fields override the server-wide limits from `homeserver.yaml` for this one user: `messages_per_second`, the sustained send rate, and `burst_count`, how many messages they can send in a burst before the sustained rate applies. This is mostly for a bot or integration account that legitimately sends more than a person would.
 
-> ⚠️ As of Synapse v1.149.1, the user list filter for shadow-banned users does not function correctly — it returns all users rather than only shadow-banned ones. The column in the list view is accurate; the filter is disabled in the UI until upstream support lands.
+To drop the override and put the user back on the server default, clear both fields and save. Leave them blank, not zero. A zero is a real limit of zero messages; blank is what removes the override.
 
----
+## Experimental features
 
-## ⏱️ Rate limits
+Per-user toggles for Synapse's experimental MSC features, on the edit page. A toggle takes effect on save, with no server restart. The two that Ketesa labels are `msc3881` (remotely toggling another client's push notifications) and `msc3575` (sliding sync). The panel actually lists whatever MSC flags the server reports for that user, so if your Synapse exposes others they will appear here too, just without a friendly description next to them. Enabling a flag for one user has no effect on anyone else; server-wide MSC enablement is still controlled in `homeserver.yaml`.
 
-Ketesa allows per-user rate limit overrides, which take precedence over the server-wide defaults defined in `homeserver.yaml`.
+## Account data
 
-### 📐 Fields
+A read-only JSON view of the account data Synapse holds for the user, the same data exposed by the Matrix `/account_data` client API. Two collapsible sections split it: Global, for account-wide entries like push rules (`m.push_rules`) and client settings, and Rooms, for per-room entries like tags and read markers, keyed by room ID. You cannot edit it here; that needs the Admin API or a client signed in as the user. Reach for it when you are chasing why a user's push notifications or room tags behave oddly.
 
-| Field | What it controls |
-|-------|-----------------|
-| `messages_per_second` | The sustained rate of messages the user may send, expressed as messages per second. |
-| `burst_count` | The number of messages the user may send in a burst before the sustained rate limit applies. |
+## Server notices
 
-### ✏️ How to override
+Server notices are administrative messages delivered to a user as an ordinary Matrix message in a dedicated system room, sent from the server's notices bot. They require `server_notices` to be configured in `homeserver.yaml`; without it the send fails with an error.
 
-1. Open the user edit page.
-2. Navigate to the **Rate limits** tab (or scroll to the rate limits section).
-3. Enter numeric values for `messages_per_second` and/or `burst_count`.
-4. Click **Save**.
+Send one to a single user from the "Send server notice" button in the edit-page toolbar, or to several at once by selecting them in the list and using the same button in the bulk toolbar. A bulk send goes to each selected user individually, one message in each person's own notices room. It is a one-way channel: the user cannot reply back to you through it, so for a real conversation reach them in a normal room.
 
-### 🔄 How to return to server default
+## MAS mode
 
-Clear both fields (leave them empty) and save. When no per-user override is stored, Synapse falls back to the server-wide rate limit configuration.
+These features appear only when `externalAuthProvider` is set and [Matrix Authentication Service](./external-auth-provider.md) is configured. MAS keeps its own account-state and session model alongside Synapse's, so a few of these overlap with the native controls and a few replace them.
 
-> 💡 Rate limit overrides are useful for bot accounts or integration users that legitimately send more messages than a regular user would.
+### Creating a user
 
----
+The create form has three fields: `username` (the local part only, no `@` and no server suffix), an optional `password` (with a generate button for a strong random one), and `admin` to grant server-administrator status on creation. On save, MAS creates the account, Synapse provisions the matching user record, and you land on the normal edit page to set the displayname, avatar, and the rest.
 
-## 🧪 Experimental features
+### Setting a password
 
-Ketesa exposes per-user toggles for Synapse Matrix Spec Change (MSC) experimental features. These are enabled or disabled individually per account and take effect immediately on save — no server restart is required.
+The standard reset-password button is replaced by "Set password", which sets the password through the MAS API, the correct path when MAS handles authentication.
 
-| MSC identifier | What it enables |
-|---------------|----------------|
-| `msc3881` | Remotely toggling push notifications for another client |
-| `msc3575` | Experimental sliding sync support |
+### Account state
 
-> 📝 These flags are per-user. Enabling a flag for one account has no effect on other accounts. Server-wide MSC enablement is controlled through `homeserver.yaml` experimental flags, not through Ketesa.
+MAS adds its own Deactivated and Locked states, each shown with a timestamp chip for when it was applied. Deactivated prevents login through MAS; Locked temporarily blocks login without fully deactivating the account. Both are distinct from Synapse-level deactivation, and both can be active at the same time: MAS controls whether the user can authenticate through MAS, while Synapse deactivation is what removes them from rooms and purges their tokens. The moderation controls in MAS mode also include the suspended and shadow-banned toggles.
 
-> ⚠️ Experimental features may change or be removed as the Matrix spec evolves. Enable them only when a specific client integration requires it.
+### Sessions
 
----
+The Sessions tab (MAS only) splits a user's sessions across four sub-tabs. Any session can be ended from its row; the button is labelled "Terminate", and terminating one immediately invalidates its token and logs out whatever is using it.
 
-## 📂 Account data
+| Sub-tab | What it is | What it shows |
+|---------|-----------|---------------|
+| Personal | Long-lived API tokens, for bots or automation | scope, name, active status, expiry |
+| Browser | Interactive browser logins | IP address, user agent, last active time |
+| OAuth2 | Sessions from OAuth 2.0 client applications | client ID, granted scopes, name, last active time |
+| Compat | Legacy sessions bridging the old Synapse login flow to MAS | device ID, name, last active IP |
 
-The **Account data** tab on the user edit page displays a read-only JSON view of the account data stored for that user by Synapse. This is the same data accessible via the Matrix `/account_data` client API endpoint.
+You can also create a personal session from the Personal sub-tab, giving it a name, a scope, and an optional expiry. The generated access token is shown once in a dialog; copy it before you close the dialog, because it cannot be retrieved again.
 
-Two scopes are shown, each in a collapsible accordion:
+### Emails
 
-| Scope | What it contains |
-|-------|-----------------|
-| **Global** | Account-wide key-value data not associated with any specific room. Common entries include push rules (`m.push_rules`), identity server preferences, and client-specific settings. |
-| **Rooms** | A map of room IDs to per-room account data for that user. Common entries include room tags (`m.tag`), read markers, and room-specific notification overrides. |
+The 3PIDs / Emails tab lists the email addresses linked to the user's MAS account, with their registration dates. Add one through its create form (a separate page with a user picker and an email field), and remove one with the button on its row, which unlinks it immediately. These addresses live in MAS, not in Synapse's `threepids` table.
 
-**When this is useful:**
+### Upstream OAuth links
 
-- Diagnosing unexpected push notification behaviour by inspecting `m.push_rules`.
-- Verifying that a client has correctly stored or migrated user preferences.
-- Checking whether a user has applied custom tags or notification settings to specific rooms.
+The SSO / Upstream OAuth tab lists the user's links to external identity providers (Google, GitHub, a corporate IdP, whatever MAS has configured), showing the provider ID, the subject identifier, and the account name. Remove a link with its delete button. Removing it means the user can no longer sign in through that provider, so make sure they have another way in, a password or another link, before you remove it.
 
-> 📝 Account data is read-only in the Ketesa UI. Editing it directly requires the Synapse Admin API or a Matrix client with the appropriate access token.
+### Policy data
+
+The Policy Data page, reached from the MAS section of the sidebar, shows the current MAS consent policy as formatted JSON with its creation time, or a note that none is set. To replace it, paste a new JSON object into the editor and click Set Policy. The editor parses as you type and keeps the save button disabled until the input is valid JSON. Note that an empty editor also leaves the button disabled, with no error shown, so a greyed-out button on a blank field is expected, not a bug. Setting a new policy replaces the existing one at once, and MAS users may be prompted to accept the new terms on their next login.
+
+## Bulk import
+
+Create many accounts at once from a CSV file, through the CSV Import button in the list toolbar. The file format, the required and optional columns, and how errors are handled are all covered in [CSV import](./csv-import.md).
 
 ---
 
-## 📣 Server notices
-
-Server notices are administrative broadcast messages delivered to users as Matrix messages in a dedicated system room. They appear in the user's client like any other message but originate from the server's notices bot account.
-
-### 📬 Single-user notice
-
-To send a notice to one specific user:
-
-1. Open the user's edit page.
-2. Click the **Send server notice** button in the top toolbar.
-3. A dialog opens. Enter the notice message body in the text area.
-4. Click **Send**.
-
-The notice is delivered to the user's server notices room immediately.
-
-### 📢 Bulk notice
-
-To send the same notice to multiple users at once:
-
-1. Navigate to the **Users** list.
-2. Select the target users using the checkboxes in the list.
-3. Click the **Send server notice** button in the bulk actions toolbar that appears at the bottom of the page.
-4. A dialog opens. Enter the notice message body.
-5. Click **Send**.
-
-Ketesa sends the notice to every selected user individually; each user receives a message in their own server notices room.
-
-> ⚠️ Server notices require the `server_notices` feature to be configured in `homeserver.yaml`. If the feature is not configured, the send request will fail with an error.
-
-> 💡 Server notices are a one-way channel — users cannot reply in a way that reaches the admin. For two-way communication, contact the user through a normal Matrix room.
-
----
-
-## 🔗 MAS user management
-
-> 📝 The following features only appear when `externalAuthProvider` is enabled and [Matrix Authentication Service (MAS)](./external-auth-provider.md) is configured.
-
-When MAS is active, Ketesa integrates with the MAS Admin API to provide account lifecycle management, session control, email management, and upstream OAuth link management directly within the user edit page.
-
-### ➕ Creating users through MAS
-
-When MAS is configured, creating a user is a two-step process:
-
-**Step 1 — MAS create form:** A focused form with three fields:
-
-| Field | Required | Notes |
-|---|---|---|
-| `username` | Yes | The local part of the MXID (no `@` or homeserver suffix). |
-| `password` | No | Optional initial password. Use the generate button for a strong random password. |
-| `admin` | No | Grant server administrator status immediately on creation. |
-
-On save, MAS creates the account and Synapse provisions the corresponding user record automatically.
-
-**Step 2 — Full edit page:** After the account is created you are redirected to the standard user edit page, where you can set the displayname, avatar, threepids, and all other profile details.
-
-### 🔐 Setting a password via MAS
-
-The **Set password** button (shown in the top toolbar instead of the standard reset-password button) opens a dialog to set a new password for the user through the MAS API. This is the correct path for password changes when MAS handles authentication.
-
-### 🔄 Account state: deactivate, reactivate, lock, unlock
-
-MAS introduces its own account state model alongside Synapse's:
-
-| State | Behaviour | How to toggle |
-|-------|-----------|--------------|
-| **Deactivated** | Prevents login via MAS; the account is disabled. Displayed with a timestamp chip showing when deactivation occurred. | Toggle the **Deactivated** checkbox in the Danger Zone panel. |
-| **Locked** | Temporarily prevents login without fully deactivating the account. Displayed with a timestamp chip showing when the lock was applied. | Toggle the **Locked** checkbox in the moderation section. |
-
-> 📝 MAS-level deactivation and locking are distinct from Synapse-level deactivation. Synapse deactivation removes the user from rooms and purges tokens; MAS deactivation/locking controls whether the user can authenticate through MAS. Both can be active simultaneously.
-
-### 🖥️ Sessions panel
-
-The **Sessions** tab (only shown in MAS mode) provides a sub-tabbed view of all active and historical sessions for the user. Each session type can be terminated from within the panel.
-
-| Session type | What it represents | How to revoke |
-|-------------|-------------------|--------------|
-| **Personal sessions** | Long-lived API tokens created by admins or by the user directly (e.g. for bots or automation). Shows scope, human name, active status, and expiry. | Click the revoke button on the session row. |
-| **Browser sessions** | Interactive browser-based login sessions tracked by MAS. Shows IP address, user agent, last active time. | Click the finish button on the session row. |
-| **OAuth2 sessions** | Sessions established via OAuth 2.0 client applications. Shows client ID, granted scopes (displayed as chips), human name, and last active time. | Click the finish button on the session row. |
-| **Compat sessions** | Legacy Matrix compatibility sessions that bridge the old Synapse login flow with MAS. Shows device ID, human name, last active IP. | Click the finish button on the session row. |
-
-Admins can also create new personal sessions directly from the Personal sessions tab by filling in the name, scope, and optional expiry fields and clicking **Create**. The generated access token is shown once in a dialog — copy it before closing, as it cannot be retrieved again.
-
-> ⚠️ Revoking or finishing a session immediately invalidates the associated access token. Any client using that token will be logged out.
-
-### 📧 Emails panel
-
-The **3PIDs / Emails** tab in MAS mode shows all email addresses linked to the user's MAS account.
-
-- **View:** All linked emails are listed with their registration date.
-- **Add:** Enter an email address in the field at the bottom of the panel and click **Add**.
-- **Remove:** Click the remove button on the email row. The email is unlinked from the MAS account immediately.
-
-> 📝 Email addresses managed here are stored in MAS, not in Synapse's `threepids` table. Changes take effect in MAS and are reflected in the user's authentication options.
-
-### 🔗 Upstream OAuth links panel
-
-The **SSO / Upstream OAuth** tab in MAS mode displays links between the user's MAS account and external OAuth providers (e.g. Google, GitHub, a corporate IdP) that have been configured in MAS.
-
-- **View:** All upstream OAuth links are listed, showing the provider ID, subject identifier, and human account name (if set).
-- **Remove:** Click the delete button on the link row.
-
-> ⚠️ Removing an upstream OAuth link means the user can no longer log in using that external provider unless the link is re-created. Ensure the user has an alternative login method (password or another provider) before removing a link.
-
-### 📋 MAS Policy Data
-
-The **Policy Data** page (accessible from the MAS section of the sidebar) allows administrators to view and update the MAS consent policy.
-
-- **Current policy:** Displays the active policy as formatted JSON, with its creation timestamp. If no policy has been set, a "No policy is currently set" message is shown.
-- **Set a New Policy:** Enter new policy data as a JSON object in the editor and click **Set Policy**. The editor validates JSON on the fly — the save button is disabled until the input is valid JSON.
-
-> ⚠️ Setting a new policy replaces the existing one immediately. MAS users may be prompted to accept the updated policy terms on their next login.
-
----
-
-## 📥 Bulk user import
-
-Ketesa supports creating multiple user accounts at once from a CSV file. The import is accessible from the **CSV Import** button in the Users list toolbar. For the full specification of the CSV format, required and optional columns, and error handling behaviour, see [CSV import](./csv-import.md).
-
----
-
-**See also:** [CSV import](./csv-import.md) · [System users](./system-users.md) · [External auth provider](./external-auth-provider.md) · [User search](./user-search.md) · [Documentation index](./README.md)
+See also: [CSV import](./csv-import.md) · [System users](./system-users.md) · [External auth provider](./external-auth-provider.md) · [User search](./user-search.md) · [Documentation index](./README.md)

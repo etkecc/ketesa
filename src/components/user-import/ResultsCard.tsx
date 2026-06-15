@@ -69,12 +69,6 @@ const ResultsCard = ({
                 ></Button>
               </Box>
             )}
-            {importResults.erroredRecords.length > 0 && (
-              <Typography key="errored" color="error.main">
-                {translate("import_users.cards.results.skipped", importResults.erroredRecords.length)}
-              </Typography>
-            )}
-
             {importResults.wasDryRun && (
               <Alert severity="warning" key="simulated">
                 {translate("import_users.cards.results.simulated_only")}

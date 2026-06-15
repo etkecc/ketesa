@@ -93,7 +93,6 @@ export interface SynapseTranslationMessages extends TranslationMessages {
         header: string;
         all_passwords_present: string;
         count_passwords_present: string;
-        use_passwords: string;
       };
       upload: {
         header: string;
@@ -109,7 +108,6 @@ export interface SynapseTranslationMessages extends TranslationMessages {
         successful: string;
         skipped: string;
         download_skipped: string;
-        with_error: string;
         simulated_only: string;
       };
     };

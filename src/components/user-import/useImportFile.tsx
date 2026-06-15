@@ -4,8 +4,7 @@ import { useTranslate, useNotify, HttpError } from "react-admin";
 
 import { ImportLine, ParsedStats, Progress, ImportResult, ChangeStats } from "./types";
 import dataProvider from "../../providers/data";
-import { returnMXID } from "../../utils/mxid";
-import { generateRandomMXID } from "../../utils/mxid";
+import { returnMXID, generateRandomMXID } from "../../utils/mxid";
 import { generateRandomPassword } from "../../utils/password";
 import createLogger from "../../utils/logger";
 
@@ -109,9 +108,6 @@ export const validateCsvImport = (
     if (meta.fields?.includes("name")) {
       delete line.name;
     }
-    if (meta.fields?.includes("user_type")) {
-      delete line.user_type;
-    }
     if (meta.fields?.includes("is_admin")) {
       delete line.is_admin;
     }
@@ -183,7 +179,6 @@ const useImportFile = () => {
   const [skippedRecords, setSkippedRecords] = useState<string>("");
 
   const [conflictMode, setConflictMode] = useState<"stop" | "skip">("stop");
-  const [passwordMode, setPasswordMode] = useState(true);
   const [useridMode, setUseridMode] = useState<"update" | "ignore">("update");
 
   const translate = useTranslate();
@@ -248,14 +243,6 @@ const useImportFile = () => {
     setConflictMode(value);
   };
 
-  const onPasswordModeChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (progress !== null) {
-      return;
-    }
-
-    setPasswordMode(e.target.checked);
-  };
-
   const onUseridModeChanged = (e: ChangeEvent<HTMLSelectElement>) => {
     if (progress !== null) {
       return;
@@ -284,12 +271,11 @@ const useImportFile = () => {
     // (so that the user doesn't have to filter out successful
     // records manually when fixing stuff in the CSV)
     setSkippedRecords(unparseCsv(results.skippedRecords));
-    if (LOGGING) log.debug("skipped records after parse", { count: skippedRecords.length });
+    if (LOGGING) log.debug("skipped records after parse", { count: results.skippedRecords.length });
   };
 
   const doImport = async (): Promise<ImportResult> => {
     const skippedRecords: ImportLine[] = [];
-    const erroredRecords: ImportLine[] = [];
     const succeededRecords: ImportLine[] = [];
     const changeStats: ChangeStats = {
       total: 0,
@@ -307,14 +293,10 @@ const useImportFile = () => {
         userRecord.deactivated = anyToBoolean(userRecord.deactivated);
         userRecord.is_guest = anyToBoolean(userRecord.is_guest);
         userRecord.admin = anyToBoolean(userRecord.admin);
-        userRecord.is_admin = anyToBoolean(userRecord.is_admin);
         // No need to do a bunch of cryptographic random number getting if
         // we are using neither a generated password nor a generated user id.
         if (useridMode === "ignore" || userRecord.id === undefined || userRecord.id === "") {
           userRecord.id = generateRandomMXID();
-        }
-        if (passwordMode === false || entry.password === undefined || entry.password === "") {
-          userRecord.password = generateRandomPassword();
         }
         // we want to ensure that the ID is always full MXID, otherwise randomly-generated MXIDs will be in the full
         // form, but the ones from the CSV will be localpart-only.
@@ -339,32 +321,11 @@ const useImportFile = () => {
           userRecord.threepids = threepidObjs;
         }
 
-        /* TODO record update stats (especially admin no -> yes, deactivated x -> !x, ... */
-
-        /* For these modes we will consider the ID that's in the record.
-         * If the mode is "stop", we will not continue adding more records, and
-         * we will offer information on what was already added and what was
-         * skipped.
-         *
-         * If the mode is "skip", we record the record for later, but don't
-         * send it to the server.
-         *
-         * If the mode is "update", we change fields that are reasonable to
-         * update.
-         *  - If the "password mode" is "true" (i.e. "use passwords from csv"):
-         *    - if the record has a password
-         *      - send the password along with the record
-         *    - if the record has no password
-         *      - generate a new password
-         *  - If the "password mode" is "false"
-         *    - never generate a new password to update existing users with
-         */
-
-        /* We just act as if there are no IDs in the CSV, so every user will be
-         * created anew.
-         * We do a simple retry loop so that an accidental hit on an existing ID
-         * doesn't trip us up.
-         */
+        /* Conflict handling lives in submitRecord below. In "ignore" id-mode the
+         * IDs are random, so a hit on an existing one is just a collision and we
+         * re-roll. In "update" id-mode a hit is a real existing user, handled per
+         * conflictMode: "stop" aborts the run, "skip" sets the record aside for
+         * the downloadable retry file. Existing users are never modified. */
         if (LOGGING) log.debug("checking existence", { id: userRecord.id });
         let retries = 0;
         const submitRecord = async (recordData: ImportLine) => {
@@ -373,6 +334,25 @@ const useImportFile = () => {
 
             if (LOGGING) log.debug("user already exists", { id: recordData.id });
 
+            // In "ignore" mode the IDs are randomly generated, so a hit on an
+            // existing one is just an unlucky collision: re-roll a fresh MXID
+            // and retry instead of treating it as a real conflict.
+            if (useridMode === "ignore") {
+              retries++;
+              if (retries > 512) {
+                log.warn("retry loop stuck", { id: recordData.id, retries });
+                skippedRecords.push(recordData);
+                return;
+              }
+              const newRecordData = Object.assign({}, recordData, {
+                id: returnMXID(generateRandomMXID()),
+              });
+              await submitRecord(newRecordData);
+              return;
+            }
+
+            // In "update" mode the ID comes from the CSV, so a hit means the
+            // user genuinely already exists. Honor the conflict mode.
             if (conflictMode === "stop") {
               throw new Error(
                 translate("import_users.error.id_exits", {
@@ -381,23 +361,8 @@ const useImportFile = () => {
               );
             }
 
-            if (conflictMode === "skip" || useridMode === "update") {
-              skippedRecords.push(recordData);
-              return;
-            }
-
-            const newRecordData = Object.assign({}, recordData, {
-              id: generateRandomMXID(),
-            });
-            retries++;
-
-            if (retries > 512) {
-              log.warn("retry loop stuck", { id: recordData.id, retries });
-              skippedRecords.push(recordData);
-              return;
-            }
-
-            await submitRecord(newRecordData);
+            skippedRecords.push(recordData);
+            return;
           } catch (e) {
             if (!(e instanceof HttpError) || (e.status && e.status !== 404)) {
               throw e;
@@ -405,6 +370,11 @@ const useImportFile = () => {
 
             if (LOGGING) log.debug("creating record", { id: recordData.id, displayname: recordData.displayname });
 
+            // Generate a password only for records we actually create, so skipped
+            // records keep their original CSV value in the downloadable retry file.
+            if (recordData.password === undefined || recordData.password === "") {
+              recordData.password = generateRandomPassword();
+            }
             if (!dryRun) {
               await dataProvider.create("users", { data: recordData });
             }
@@ -430,7 +400,6 @@ const useImportFile = () => {
 
     return {
       skippedRecords,
-      erroredRecords,
       succeededRecords,
       totalRecordCount: entriesCount,
       changeStats,
@@ -460,10 +429,8 @@ const useImportFile = () => {
     errors,
     stats,
     conflictMode,
-    passwordMode,
     useridMode,
     onConflictModeChanged,
-    onPasswordModeChange,
     onUseridModeChanged,
     onFileChange,
     downloadSkippedRecords,

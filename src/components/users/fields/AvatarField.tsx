@@ -27,7 +27,7 @@ const AvatarField = ({ source, ...rest }: AvatarProps & FieldProps) => {
     if (mxcURL) {
       fetchAvatar(mxcURL);
     } else {
-      // Avatar was removed — revoke the old blob URL and clear the displayed image
+      // Avatar was removed; revoke the old blob URL and clear the displayed image
       if (srcRef.current) {
         URL.revokeObjectURL(srcRef.current);
         srcRef.current = "";

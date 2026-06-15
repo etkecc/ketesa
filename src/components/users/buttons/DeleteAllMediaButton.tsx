@@ -331,7 +331,10 @@ export const DeleteRoomMediaButton = () => {
 };
 
 /**
- * Bulk delete all local media for selected rooms (skips encrypted rooms at the API level).
+ * Bulk delete all local media for selected rooms.
+ * Unlike the single-room button, this does not filter out encrypted rooms; the room media
+ * list endpoint only returns media from unencrypted events, so an encrypted room loses only
+ * whatever unencrypted local media it has.
  */
 export const DeleteRoomMediaBulkButton = () => {
   const theme = useTheme();

@@ -1,26 +1,16 @@
-# 🔐 CORS Credentials
+# CORS credentials
 
-Controls how Ketesa sends cookies and credentials when making API requests. Most deployments don't need to touch this — the default works fine for standard setups. You'll typically only need it when adding a reverse-proxy authentication layer in front of your homeserver.
+`corsCredentials` controls whether Ketesa sends cookies with its calls to the admin API. Most deployments never touch it: the default, `same-origin`, is right when Ketesa and the homeserver share an origin. The one situation that needs it is a cookie-based auth layer in front of the homeserver, such as a reverse proxy doing ForwardAuth with [Authelia](https://github.com/Awesome-Technologies/synapse-admin/issues/655). There you set `include` so the auth cookie rides along with every request. The third value, `omit`, sends no cookies at all, for setups whose security policy forbids them.
 
-**When to change it:**
+The values map straight onto the browser's fetch credentials modes ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#including_credentials)):
 
-- **`include`** — use this when you have cookie-based auth in front of your homeserver (e.g., [ForwardAuth with Authelia](https://github.com/Awesome-Technologies/synapse-admin/issues/655)). Cookies will be forwarded with every request regardless of origin.
-- **`omit`** — use this if your setup explicitly must not send any cookies (rare; usually for strict security policies).
-- **`same-origin`** — the default; works for the vast majority of deployments.
+| Value | Cookies sent |
+|---|---|
+| `same-origin` (default) | Only to the same origin |
+| `include` | With every request |
+| `omit` | Never |
 
-## ⚙️ Configuration
-
-> 📚 [MDN reference: credentials option](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch#including_credentials)
-
-| Value | When to use | Behavior |
-|-------|-------------|----------|
-| `same-origin` *(default)* | Standard deployments | Cookies sent only for same-origin requests |
-| `include` | Cookie-based auth (ForwardAuth, Authelia, etc.) | Cookies sent with every request |
-| `omit` | Strict no-cookie policies | Cookies never sent |
-
-[Configuration options](config.md)
-
-### config.json
+Set it under `corsCredentials` in either configuration source (see [Configuration](./config.md)):
 
 ```json
 {
@@ -28,7 +18,7 @@ Controls how Ketesa sends cookies and credentials when making API requests. Most
 }
 ```
 
-### `/.well-known/matrix/client`
+In `/.well-known/matrix/client`, under the `cc.etke.ketesa` key:
 
 ```json
 {
@@ -37,3 +27,7 @@ Controls how Ketesa sends cookies and credentials when making API requests. Most
   }
 }
 ```
+
+---
+
+See also: [Configuration](./config.md) · [Reverse proxy](./reverse-proxy.md) · [Documentation index](./README.md)

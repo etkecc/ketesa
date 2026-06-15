@@ -34,7 +34,7 @@ export interface ScheduledTask {
 }
 
 export interface DeleteMediaParams {
-  before_ts: string;
+  before_ts: number;
   size_gt: number;
   keep_profiles: boolean;
 }
@@ -73,7 +73,7 @@ export interface AdminClientConfig {
 
 export interface SynapseDataProvider extends DataProvider {
   deleteMedia: (params: DeleteMediaParams) => Promise<DeleteMediaResult>;
-  purgeRemoteMedia: (params: DeleteMediaParams) => Promise<DeleteMediaResult>;
+  purgeRemoteMedia: (params: Pick<DeleteMediaParams, "before_ts">) => Promise<DeleteMediaResult>;
   uploadMedia: (params: UploadMediaParams) => Promise<UploadMediaResult>;
   updateFeatures: (id: Identifier, features: ExperimentalFeaturesModel) => Promise<void>;
   getRateLimits: (id: Identifier) => Promise<RateLimitsModel>;

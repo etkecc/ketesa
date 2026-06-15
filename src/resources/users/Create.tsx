@@ -85,7 +85,7 @@ const MASUserCreate = (props: CreateProps) => {
   return (
     <Create {...props}>
       <SimpleForm onSubmit={handleSubmit}>
-        <TextInput source="username" required autoComplete="off" />
+        <TextInput source="username" validate={validateUser} autoComplete="off" />
         <UserPasswordInput source="password" autoComplete="new-password" />
         <BooleanInput source="admin" />
       </SimpleForm>

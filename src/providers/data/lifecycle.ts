@@ -38,14 +38,14 @@ export const wrapWithLifecycle = (base: SynapseDataProvider): SynapseDataProvide
       resource: "users",
       beforeUpdate: async (params: UpdateParams<any>, dataProvider: DataProvider) => {
         // In MAS mode: dispatch MAS auth-field changes and skip Synapse-only logic.
-        // When the user has no MAS account (Synapse-only — typically appservice/bot users),
+        // When the user has no MAS account (Synapse-only, typically appservice/bot users),
         // mas_id is undefined and we fall through to the Synapse-only branch below.
         const masId = params.previousData.mas_id as string | undefined;
         if (isMAS() && masId) {
           const prev = params.previousData;
           const next = params.data;
 
-          // MAS-managed fields — only fire when the field was actually submitted (not disabled/omitted).
+          // MAS-managed fields: only fire when the field was actually submitted (not disabled/omitted).
           // Disabled BooleanInputs (e.g. admin editing their own account) are excluded from react-hook-form
           // submission, leaving the value as undefined. Guarding with !== undefined prevents spurious API
           // calls that would e.g. strip admin from the current user or unlock an already-unlocked account.
@@ -144,7 +144,7 @@ export const wrapWithLifecycle = (base: SynapseDataProvider): SynapseDataProvide
           // create-or-recreate, so letting it run would recreate the profile we just erased.
           // Re-editing an already-erased user does not re-enter this branch (the change check above
           // is false when both flags are unchanged), so recreating an erased user via a normal edit
-          // still works. Note: returning here exits beforeUpdate only — react-admin still runs any
+          // still works. Note: returning here exits beforeUpdate only; react-admin still runs any
           // registered beforeSave on params.data; there is none on "users" today, keep it that way.
           params.meta = { ...params.meta, userErased: true };
           return params;

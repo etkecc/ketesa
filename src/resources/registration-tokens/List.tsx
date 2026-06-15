@@ -16,6 +16,7 @@ import { useDocTitle } from "../../components/hooks/useDocTitle";
 import { useIsMAS } from "../../providers/data/mas";
 import { DATE_FORMAT } from "../../utils/date";
 import { Datagrid, EmptyState, List } from "../../components/layout";
+import { RevokeTokenButton } from "./Edit";
 
 const registrationTokenFilters = [<BooleanInput key="valid" source="valid" />];
 
@@ -56,11 +57,15 @@ export const RegistrationTokenList = (props: ListProps) => {
               )}
             </>
           )}
-          tertiaryText={() => <DeleteButton redirect={false} />}
+          tertiaryText={() => (isMAS ? <RevokeTokenButton /> : <DeleteButton redirect={false} />)}
           rowClick="edit"
         />
       ) : (
-        <Datagrid rowLabel={record => String(record.token)} rowClick="edit">
+        <Datagrid
+          rowLabel={record => String(record.token)}
+          rowClick="edit"
+          bulkActionButtons={isMAS ? false : undefined}
+        >
           <TextField source="token" sortable={false} label="resources.registration_tokens.fields.token" />
           <NumberField
             source="uses_allowed"

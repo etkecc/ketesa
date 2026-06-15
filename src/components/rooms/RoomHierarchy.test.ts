@@ -47,7 +47,7 @@ describe("isValidOrder", () => {
   });
 
   it("rejects non-ASCII Unicode that would pass naive string comparison", () => {
-    expect(isValidOrder("\u0100")).toBe(false); // Ā — codepoint 256, above 0x7E
+    expect(isValidOrder("\u0100")).toBe(false); // Ā (codepoint 256, above 0x7E)
     expect(isValidOrder("café")).toBe(false); // é is codepoint 233, above 0x7E
   });
 });

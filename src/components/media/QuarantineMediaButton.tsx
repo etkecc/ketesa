@@ -35,7 +35,10 @@ export const QuarantineMediaButton = (props: ButtonProps) => {
     },
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     onError: (error: any) =>
-      notify(error?.message || "resources.quarantine_media.action.send_failure", { type: "error" }),
+      notify(error?.message || "resources.quarantine_media.action.send_failure", {
+        type: "error",
+        messageArgs: { error: error },
+      }),
   });
 
   if (!record) return null;

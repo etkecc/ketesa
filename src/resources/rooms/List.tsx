@@ -47,6 +47,7 @@ import {
 import DeleteRoomButton from "../../components/users/buttons/DeleteRoomButton";
 import { DeleteRoomMediaBulkButton } from "../../components/users/buttons/DeleteAllMediaButton";
 import { useDocTitle } from "../../components/hooks/useDocTitle";
+import { isMXID } from "../../utils/mxid";
 import { Room } from "../../providers/types";
 import { Datagrid, EmptyState, List } from "../../components/layout";
 
@@ -54,14 +55,6 @@ export const RoomPagination = () => <Pagination rowsPerPageOptions={[10, 25, 50,
 
 export const MakeAdminBtn = () => {
   const record = useRecordContext() as Room;
-
-  if (!record) {
-    return null;
-  }
-
-  if (record.joined_local_members < 1) {
-    return null;
-  }
 
   const ownMXID = localStorage.getItem("user_id") || "";
   const [open, setOpen] = useState(false);
@@ -90,11 +83,23 @@ export const MakeAdminBtn = () => {
     },
   });
 
+  if (!record) {
+    return null;
+  }
+
+  if (record.joined_local_members < 1) {
+    return null;
+  }
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserIdValue(event.target.value);
   };
 
   const handleConfirm = async () => {
+    if (!isMXID(userIdValue)) {
+      notify("ketesa.auth.username_error", { type: "warning" });
+      return;
+    }
     mutate();
     setOpen(false);
   };
@@ -141,7 +146,7 @@ export const MakeAdminBtn = () => {
               value={userIdValue}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              label={"Matrix ID"}
+              label={translate("resources.users.fields.id")}
             />
           </>
         }
@@ -152,10 +157,6 @@ export const MakeAdminBtn = () => {
 
 export const JoinUserBtn = () => {
   const record = useRecordContext() as Room;
-
-  if (!record) {
-    return null;
-  }
 
   const [open, setOpen] = useState(false);
   const [userIdValue, setUserIdValue] = useState("");
@@ -183,11 +184,19 @@ export const JoinUserBtn = () => {
     },
   });
 
+  if (!record) {
+    return null;
+  }
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserIdValue(event.target.value);
   };
 
   const handleConfirm = async () => {
+    if (!isMXID(userIdValue)) {
+      notify("ketesa.auth.username_error", { type: "warning" });
+      return;
+    }
     mutate();
     setOpen(false);
   };
@@ -234,7 +243,7 @@ export const JoinUserBtn = () => {
               value={userIdValue}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              label={"Matrix ID"}
+              label={translate("resources.users.fields.id")}
             />
           </>
         }

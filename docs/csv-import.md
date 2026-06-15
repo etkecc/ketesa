@@ -1,121 +1,68 @@
-# 🎯 Bulk CSV User Import
+# Bulk CSV user import
 
-The bulk CSV import feature lets you create many Matrix user accounts at once by uploading a structured CSV file. Instead of manually creating accounts one by one through the UI, you can prepare a spreadsheet, export it as CSV, and provision hundreds of users in a single operation — ideal for onboarding a new organisation, migrating users from another platform, or pre-seeding accounts before launch.
+Import creates Matrix accounts in bulk from a CSV file: prepare a spreadsheet, export it, upload it, and Ketesa provisions every row. It only ever creates accounts and never updates them, so an ID that already exists is a conflict to stop or skip on, never a record to modify. And every account it creates gets a password: the CSV's own if the row supplies one, a random password you never see if it doesn't. On native Synapse, decide how those users will receive credentials before you run; under Matrix Authentication Service, where login doesn't use these passwords, it matters less.
 
-## ✨ Overview / Capabilities
+The whole thing runs in your browser. Parsing happens the moment you pick a file, and nothing reaches the server until you uncheck the dry run and start the real import.
 
-- Upload any RFC-4180 CSV file with standard user fields
-- Validate the file and preview parsed statistics before committing any changes
-- Dry-run mode: simulate the full import without writing anything to the server
-- Three conflict modes to control what happens when a user ID already exists
-- Automatic random password generation for rows that have no password
-- Automatic random MXID generation for rows that have no ID
-- Third-party ID (3PID, e.g. email) provisioning via a compact inline syntax
-- Download a CSV of skipped records after the import so you can fix and re-run them
+## The CSV file
 
----
+The first row is a header naming the columns. Names are case-insensitive and surrounding whitespace is ignored, so `ID `, `id`, and `Id` are one column, and column order doesn't matter. Two columns are required, and the import is refused outright if either is missing from the header:
 
-## 📋 CSV Format
-
-The CSV file must have a header row. Column names are **case-insensitive** and leading/trailing whitespace is stripped automatically.
-
-### 🔑 Required columns
-
-| Column | Description |
+| Column | Meaning |
 |---|---|
-| `id` | Matrix user ID. Accepts a full MXID (`@alice:example.com`) or a bare localpart (`alice`). If empty or missing per-row, a random MXID is generated (see [User ID mode](#️-import-options)). |
-| `displayname` | Human-readable display name shown in Matrix clients. |
+| `id` | The user's Matrix ID, either a full MXID (`@alice:example.com`) or a bare localpart (`alice`) that gets your server's domain appended. Leave a row's value blank to have a random MXID generated for it. |
+| `displayname` | The name shown in Matrix clients. |
 
-> ⚠️ The import will be rejected immediately if either `id` or `displayname` is missing from the header row.
+Everything else is optional:
 
-### 🗂️ Optional columns
+| Column | Meaning |
+|---|---|
+| `password` | Plaintext password. Blank gets a random one (see above). |
+| `admin` | Server administrator. Boolean. |
+| `is_guest` | Guest account. Boolean. |
+| `deactivated` | Created already deactivated. Boolean. |
+| `avatar_url` | An `mxc://` URI for the avatar image. |
+| `user_type` | Synapse user type, such as `bot`, or a custom type your server defines. Blank means a regular user. |
+| `threepids` | Third-party IDs as a comma-separated list of `medium:address` pairs, e.g. `email:alice@example.com,msisdn:+1234567890`. A pair not in that form is dropped silently. |
 
-| Column | Type | Description |
-|---|---|---|
-| `password` | string | Plaintext password for the account. If empty, a random password is generated (controlled by [Password mode](#️-import-options)). |
-| `admin` | boolean | Whether the user is a server administrator. Accepts `1`, `true`, `yes`, `on` for true; `0`, `false`, `no`, `off`, `null`, `undefined`, or empty for false. |
-| `is_guest` | boolean | Whether the account is a guest. Same boolean values as `admin`. |
-| `deactivated` | boolean | Whether the account is deactivated on creation. Same boolean values as `admin`. |
-| `avatar_url` | string | `mxc://` URI for the user's avatar image. |
-| `user_type` | string | Synapse user type identifier (e.g. `bot`). Leave empty for a regular user. |
-| `threepids` | string | Comma-separated list of third-party identifiers in `medium:address` format (e.g. `email:alice@example.com,msisdn:+1234567890`). Pairs with an invalid format are silently ignored. |
+Booleans read `1`, `true`, `yes`, or `on` as true and `0`, `false`, `no`, `off`, `null`, `undefined`, or blank as false; case and spacing don't matter. Any other value, say `maybe`, is an error that rejects the whole file, so you hear about it before anything is created rather than after.
 
-> 📝 The columns `name` and `is_admin` are recognised as legacy aliases produced by earlier react-admin CSV exports and are silently discarded during import. Use `id` and `admin` respectively.
+Any column beyond these is passed through to the server untouched. Two old names are the exception: `name` and `is_admin`, produced by earlier react-admin exports, are recognised and silently dropped. Use `id` and `admin` instead.
 
-> 💡 Column order in the CSV does not matter. Extra columns not listed above are passed through to the server as-is.
-
-### 📄 Example
+A small example:
 
 ```csv
-id,displayname,password,admin,is_guest,deactivated,avatar_url,threepids
-alice,Alice Example,s3cr3t,false,false,false,,email:alice@example.com
-bob,Bob Example,,false,false,false,,
-@carol:example.com,Carol Example,hunter2,true,false,false,mxc://example.com/abc123,email:carol@example.com
+id,displayname,password,admin,threepids
+alice,Alice Example,s3cr3t,false,email:alice@example.com
+bob,Bob Example,,false,
+@carol:example.com,Carol Example,hunter2,true,email:carol@example.com
 ```
 
----
+Bob's password column is blank, so Bob gets a generated one.
 
-## ⚙️ Import Options
+## Running an import
 
-These options are presented in the UI after a valid CSV has been loaded, before the import is started.
+Open **Users** in the sidebar, then **Import**. Pick your file and it's parsed in the browser straight away, nothing sent yet. A stats card reports what it found: the row count, how many are flagged admin or guest, and how many carry an ID or a password, so you can catch a malformed file before it does anything.
 
-| Option | UI control | Values | Default | Description |
-|---|---|---|---|---|
-| **Dry-run mode** | Checkbox | enabled / disabled | enabled | When enabled, the import runs through all validation and conflict checks but does **not** create any accounts on the server. Always recommended for a first pass. |
-| **Conflict mode** | Dropdown | `stop`, `skip` | `stop` | What to do when a user ID from the CSV already exists on the server (see [Handling conflicts](#-how-to-handle-conflicts)). |
-| **Password mode** | Checkbox | enabled / disabled | enabled | When enabled, passwords supplied in the CSV are used as-is and missing passwords get a randomly generated one. When disabled, no password is set or updated for any user. |
-| **User ID mode** | Dropdown | `ignore`, `update` | `update` | Controls whether IDs present in the CSV are used (`update`) or discarded in favour of freshly generated random MXIDs (`ignore`). Only shown when at least one row in the CSV has a non-empty `id` value. |
+A **conflict mode** dropdown sets what a clash with an existing account does (below). If any row carries an ID, a **user ID mode** dropdown also appears: keep those IDs (`update`, the default) or discard them all and generate random MXIDs instead (`ignore`).
 
----
+Leave **Simulate only** checked for the first pass. A dry run does everything the real import does, parsing and conflict checks included, but creates nothing; if it reports no skipped rows, the real run won't skip any either, short of someone changing the server underneath you. Then uncheck **Simulate only** and run it again for real. Progress ticks by row.
 
-## 🛠️ How to Import Users
+Files over 100 MB are refused, to keep the browser from locking up. Split a larger import into chunks.
 
-1. **Navigate to the import page.** In the left sidebar, open **Users**, then click **Import**.
-2. **Prepare your CSV.** Create a file with at minimum the `id` and `displayname` columns. Add any optional columns you need (see [CSV Format](#-csv-format)).
-3. **Upload the file.** Click the file input and select your CSV. The file is parsed immediately in the browser — no data is sent to the server yet.
-4. **Review the parsed statistics.** The stats card shows the total number of users found, how many have guest or admin flags set, how many have explicit IDs, and how many have passwords. Verify these numbers match your expectations.
-5. **Configure import options.** Set conflict mode, password mode, and user ID mode as needed (see [Import Options](#️-import-options)).
-6. **Run a dry run first.** Make sure the **Simulate only** checkbox is ticked, then click **Run import**. Review the results — check the success count and whether any records were skipped.
-7. **Run the real import.** Uncheck **Simulate only**, then click **Run import** again. Progress is shown inline as records are processed.
-8. **Review results.** The results card appears when the import completes (see [Reading the Results](#-how-to-read-results)).
+## Conflicts
 
-> ⚠️ Files larger than 100 MB are rejected. For very large imports, split the CSV into chunks below this limit.
+A conflict is a row whose ID already belongs to a real account. Since the import can't modify an existing account, **conflict mode** picks one of two responses:
 
-> 💡 The dry run uses the exact same logic as the real import, including conflict detection. If the dry run shows zero skipped records, the real run will also skip none — assuming no concurrent changes on the server.
+- **Stop**, the default, halts at the first clash. Everything before it is already created (or simulated), and the offending ID is named in the error. Use it when the file is meant to be all-new, so a collision means your data is wrong.
+- **Skip** sets clashing rows aside and carries on. Reach for it to re-run a half-finished import, or when the file deliberately mixes new and existing users.
+
+There is no update mode. To change existing accounts, use the user edit form or the user list's bulk actions. (In `ignore` ID-mode the IDs are all freshly random, so a collision there is just bad luck and the importer quietly re-rolls a new one rather than counting it as a conflict.)
+
+## Results
+
+When the run finishes, a results card replaces the controls: the total processed, the count created with their display names listed, and, only when some were set aside, the count skipped with a **Download skipped records** button. That file, `skippedRecords.csv`, is itself a valid import: it keeps each row's original columns, so fix what clashed and upload it again without weeding the successful rows out of your original. A dry run adds a banner reminding you nothing was actually created, and any error that halts a run shows in its own card above. **Back** returns to the user list.
 
 ---
 
-## ⚔️ How to Handle Conflicts
-
-A conflict occurs when the `id` of a CSV row resolves to a Matrix user that already exists on the server. The **Conflict mode** setting controls what happens:
-
-| Mode | Value | Behaviour | When to use |
-|---|---|---|---|
-| **Stop** | `stop` | The import halts immediately at the first conflicting record. Records processed before the conflict are kept (or simulated). The offending ID is reported in the error card. | Safe default. Use when your CSV should contain only new users and any existing ID indicates a data problem. |
-| **Skip** | `skip` | Conflicting records are silently skipped and added to the skipped-records list. The import continues with the remaining rows. | Use when you are re-running a partially completed import or when your CSV intentionally mixes new and existing users. |
-
-> 📝 In `skip` mode, all skipped records are available for download as a CSV after the import finishes (see [Reading the Results](#-how-to-read-results)). You can edit the downloaded file and re-import only the skipped rows.
-
-> ⚠️ There is no **Update** conflict mode. Existing user accounts are never modified by the import, regardless of conflict mode setting. To modify existing users, use the user edit form or the user list bulk actions.
-
----
-
-## 📊 How to Read Results
-
-When the import finishes the results card replaces the import controls and shows:
-
-| Item | Description |
-|---|---|
-| **Total** | The total number of rows that were processed from the CSV. |
-| **Successful** | The count of accounts that were (or would be, in dry-run) successfully created. A list of their display names is shown below the count. |
-| **Skipped** | The count of records that were skipped due to a conflict (only in `skip` conflict mode). A **Download skipped records** button appears — clicking it downloads `skippedRecords.csv` containing those rows in the original CSV format. |
-| **Errored** | The count of records that could not be processed due to an error. |
-| **Simulated only** warning | A yellow alert is shown when the results are from a dry run and no accounts were actually created. |
-
-After reviewing the results, click **Back** to return to the user list.
-
-> 💡 The downloaded `skippedRecords.csv` is a valid import CSV. You can correct it and upload it for a follow-up import without needing to filter out the already-successful rows from your original file.
-
----
-
-**See also:** [User management](./user-management.md) · [Documentation index](./README.md)
+See also: [User management](./user-management.md) · [Documentation index](./README.md)

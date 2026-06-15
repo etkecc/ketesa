@@ -412,10 +412,33 @@ describe("dataProvider", () => {
       meta: { userErased: true },
     });
 
-    // No HTTP request fired — the erased account would have returned M_UNKNOWN.
+    // No HTTP request fired; the erased account would have returned M_UNKNOWN.
     expect(fetch).not.toHaveBeenCalled();
     expect(result.data.id).toBe("@bob:hs");
     expect(result.data.deactivated).toBe(true);
     expect(result.data.erased).toBe(true);
+  });
+
+  it("createMany sends one notice per recipient with no cross-contamination", async () => {
+    // Guards the wrong-recipient hazard: createMany builds a fresh payload per id and
+    // must never bleed one recipient's id into another's request.
+    // Fresh Response per call: a single Response body can only be read once.
+    vi.mocked(fetch).mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ event_id: "$evt" }))));
+
+    const ids = ["@alice:localhost", "@bob:localhost", "@carol:localhost"];
+    await dataProvider.createMany("servernotices", { ids, data: { body: "maintenance tonight" } });
+
+    expect(fetch).toHaveBeenCalledTimes(ids.length);
+
+    const sentUserIds = vi.mocked(fetch).mock.calls.map(call => {
+      const opts = call[1] as { body: string };
+      const body = JSON.parse(opts.body);
+      // Every recipient gets the same message body, addressed to themselves only.
+      expect(body.content).toEqual({ msgtype: "m.text", body: "maintenance tonight" });
+      return body.user_id as string;
+    });
+
+    expect([...sentUserIds].sort()).toEqual([...ids].sort());
+    expect(new Set(sentUserIds).size).toBe(ids.length);
   });
 });

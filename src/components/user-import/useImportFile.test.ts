@@ -79,13 +79,13 @@ describe("validateCsvImport", () => {
     expect(result.errors[0]).toBe("import_users.error.invalid_value");
   });
 
-  it("strips name/user_type/is_admin fields from records", () => {
+  it("strips name/is_admin legacy aliases but preserves user_type", () => {
     const csv = "id,displayname,name,user_type,is_admin\n" + "@u:hs,User One,Legacy Name,custom,TRUE\n";
     const result = validateCsvImport(parseText(csv), translate);
 
     expect(result.ok).toBe(true);
     expect(result.data[0].name).toBeUndefined();
-    expect(result.data[0].user_type).toBeUndefined();
     expect(result.data[0].is_admin).toBeUndefined();
+    expect(result.data[0].user_type).toBe("custom");
   });
 });

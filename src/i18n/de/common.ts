@@ -105,7 +105,6 @@ const common: Record<string, any> = {
         header: "Passwörter",
         all_passwords_present: "Passwörter in jedem Eintrag vorhanden",
         count_passwords_present: "%{smart_count} Eintrag mit Passwort |||| %{smart_count} Einträge mit Passwörtern",
-        use_passwords: "Passwörter aus der CSV-Datei verwenden",
       },
       upload: {
         header: "CSV Datei importieren",
@@ -122,7 +121,6 @@ const common: Record<string, any> = {
         successful: "%{smart_count} Einträge erfolgreich importiert",
         skipped: "%{smart_count} Einträge übersprungen",
         download_skipped: "Übersprungene Einträge herunterladen",
-        with_error: "%{smart_count} Eintrag mit Fehlern ||| %{smart_count} Einträge mit Fehlern",
         simulated_only: "Import-Vorgang war nur simuliert",
       },
     },

@@ -137,7 +137,7 @@ import { generateRandomPassword } from "../../utils/password";
 import { UserPreventSelfDelete } from "./List";
 import { Datagrid, EmptyState } from "../../components/layout";
 
-// Shared constants — also used by Create.tsx
+// Shared constants, also used by Create.tsx
 export const choices_medium = [
   { id: "email", name: "resources.users.email" },
   { id: "msisdn", name: "resources.users.msisdn" },
@@ -156,7 +156,7 @@ export const validateUser = [required(), maxLength(253), regex(/^[a-z0-9._=\-+/]
 
 export const validateAddress = [required(), maxLength(255)];
 
-// Set MAS password — used in the toolbar when in MAS mode
+// Set MAS password; used in the toolbar when in MAS mode
 const MASSetPasswordButton = () => {
   const record = useRecordContext();
   const [loading, setLoading] = useState(false);
@@ -229,7 +229,7 @@ const MASSetPasswordButton = () => {
   );
 };
 
-// MAS sessions panel — sub-tabbed, shown in the Sessions tab of the user profile in MAS mode
+// MAS sessions panel: sub-tabbed, shown in the Sessions tab of the user profile in MAS mode
 const MASSessionsPanel = () => {
   const record = useRecordContext();
   const translate = useTranslate();
@@ -505,7 +505,7 @@ const MASSessionsPanel = () => {
   );
 };
 
-// MAS upstream OAuth links panel — replaces the Synapse SSO tab in MAS mode
+// MAS upstream OAuth links panel: replaces the Synapse SSO tab in MAS mode
 const MASUpstreamOAuthLinksPanel = () => {
   const record = useRecordContext();
   const translate = useTranslate();
@@ -618,7 +618,7 @@ const MASUpstreamOAuthLinksPanel = () => {
   );
 };
 
-// MAS email management panel — replaces the Synapse 3PIDs tab in MAS mode
+// MAS email management panel: replaces the Synapse 3PIDs tab in MAS mode
 const MASEmailsPanel = () => {
   const record = useRecordContext();
   const dataProvider = useDataProvider();

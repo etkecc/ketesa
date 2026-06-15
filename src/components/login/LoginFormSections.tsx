@@ -26,7 +26,7 @@ interface LoginFormSectionsProps {
  * The login form body: the credentials/access-token tabs, the homeserver URL
  * field, the server-state hints, and the username/password (or access-token)
  * inputs. The username/password inputs render whenever the credentials tab is
- * active — never gated on the probe result — so they are present in the DOM
+ * active, never gated on the probe result, so they are present in the DOM
  * regardless of probe timing. That is the keyboard-trap fix: Tab always reaches
  * them. They are merely disabled once a resolved server is known not to accept
  * password auth (and stay enabled while resolving, for autofill compatibility).
@@ -155,20 +155,20 @@ export const LoginFormSections = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time URL-param seeding on mount
   }, []);
 
-  // Disable inputs when a resolved server will not accept password sign-in —
+  // Disable inputs when a resolved server will not accept password sign-in:
   // either it advertises no password flow, or it asks OIDC-aware clients to
   // suppress password (suppressPassword). This mirrors the Sign-in button's
   // disabled logic, so the "password isn't available" notice never sits above
   // a still-usable field.
   // Error states (unreachable/incompatible) keep inputs enabled so the user can
-  // correct the URL without the fields dropping out of tab order — disabling
+  // correct the URL without the fields dropping out of tab order; disabling
   // them there would reintroduce a narrower version of the keyboard trap.
   const inputsDisabled =
     loading || (probeState.tag === "ready" && (!probeState.caps.password || probeState.caps.suppressPassword));
 
   // When the credential fields go disabled, clear any stale required-validation
   // errors left from an earlier interaction (e.g. the user focused username,
-  // blurred it empty, then entered a server that does not accept password) —
+  // blurred it empty, then entered a server that does not accept password);
   // otherwise a greyed-out field keeps showing a red "required" message.
   useEffect(() => {
     if (inputsDisabled) {
@@ -189,7 +189,7 @@ export const LoginFormSections = ({
       : "";
 
   // Retain the last advertised flows so the "incompatible" message can animate
-  // out smoothly — the Collapse keeps its child mounted through the exit
+  // out smoothly; the Collapse keeps its child mounted through the exit
   // transition, by which point probeState no longer carries advertisedFlows.
   const lastFlowsRef = useRef("");
   if (probeState.tag === "incompatible") {
@@ -236,8 +236,8 @@ export const LoginFormSections = ({
         )}
       </Box>
       {/* One persistent aria-live region wraps the animated status messages, so a
-          screen reader announces every probe-state change — including the same
-          error twice in a row — reliably. Per-message role/aria-live is dropped
+          screen reader announces every probe-state change, including the same
+          error twice in a row, reliably. Per-message role/aria-live is dropped
           to avoid nested live regions reading the text twice. */}
       <Box aria-live="polite">
         <Collapse in={probeState.tag === "resolving"} unmountOnExit>

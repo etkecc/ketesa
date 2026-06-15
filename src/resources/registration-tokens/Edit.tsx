@@ -27,7 +27,7 @@ import { dateFormatter, dateParser } from "../../utils/date";
 
 const validateUsesAllowed = [number()];
 
-const RevokeTokenButton = () => {
+export const RevokeTokenButton = () => {
   const record = useRecordContext();
   const [loading, setLoading] = useState(false);
   const notify = useNotify();
@@ -75,13 +75,16 @@ const RevokeTokenButton = () => {
   );
 };
 
-const RegistrationTokenEditToolbar = () => (
-  <Toolbar sx={{ justifyContent: "space-between" }}>
-    <SaveButton />
-    <RevokeTokenButton />
-    <DeleteButton redirect="list" />
-  </Toolbar>
-);
+const RegistrationTokenEditToolbar = () => {
+  const isMAS = useIsMAS();
+  return (
+    <Toolbar sx={{ justifyContent: "space-between" }}>
+      <SaveButton />
+      <RevokeTokenButton />
+      {!isMAS && <DeleteButton redirect="list" />}
+    </Toolbar>
+  );
+};
 
 export const RegistrationTokenEdit = (props: EditProps) => {
   const translate = useTranslate();

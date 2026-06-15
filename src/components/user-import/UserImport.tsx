@@ -20,13 +20,11 @@ const UserImport = () => {
     errors,
     stats,
     conflictMode,
-    passwordMode,
     useridMode,
     onFileChange,
     onDryRunModeChanged,
     runImport,
     onConflictModeChanged,
-    onPasswordModeChange,
     onUseridModeChanged,
     downloadSkippedRecords,
   } = useImportFile();
@@ -50,9 +48,7 @@ const UserImport = () => {
         stats={stats}
         progress={progress}
         importResults={importResults}
-        passwordMode={passwordMode}
         useridMode={useridMode}
-        onPasswordModeChange={onPasswordModeChange}
         onUseridModeChanged={onUseridModeChanged}
       />
       <StartImportCard

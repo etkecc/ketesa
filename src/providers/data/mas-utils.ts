@@ -20,7 +20,7 @@ export const isMAS = (): boolean => {
 };
 
 /**
- * React hook for components — reactive, backed by react-admin store.
+ * React hook for components; reactive, backed by react-admin store.
  */
 export const useIsMAS = (): boolean => {
   const [value] = useStore<boolean>("isMAS", false);
@@ -174,7 +174,7 @@ export const setMASCursor = (cacheKey: string, page: number, cursor: string): vo
   masCursorCache.set(cacheKey, cache);
 };
 
-// Legacy registration-token helpers — delegate to generic functions
+// Legacy registration-token helpers; delegate to generic functions
 export const getMASRegistrationTokensCursorKey = (params: { perPage: number }, valid?: boolean) =>
   buildMASCursorKey("registration_tokens", params.perPage, { valid });
 

@@ -18,7 +18,7 @@ const notify = (v: ServerVersions) => {
 
 /**
  * Fetch Synapse (and optionally MAS) versions, cache the result.
- * Safe to call multiple times — deduplicates concurrent calls.
+ * Safe to call multiple times; deduplicates concurrent calls.
  */
 export const fetchServerVersions = async (): Promise<ServerVersions> => {
   if (cached) return cached;

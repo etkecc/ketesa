@@ -23,9 +23,9 @@ import {
 } from "react-admin";
 
 import { DeleteMediaParams, SynapseDataProvider } from "../../providers/types";
-import { dateParser } from "../../utils/date";
+import { dateFormatter, dateParser } from "../../utils/date";
 
-const PurgeRemoteMediaDialog = ({ open, onClose, onSubmit }) => {
+const PurgeRemoteMediaDialog = ({ defaultBeforeTs, open, onClose, onSubmit }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const translate = useTranslate();
@@ -39,8 +39,9 @@ const PurgeRemoteMediaDialog = ({ open, onClose, onSubmit }) => {
           <DateTimeInput
             source="before_ts"
             label="purge_remote_media.fields.before_ts"
-            defaultValue={0}
+            defaultValue={defaultBeforeTs}
             parse={dateParser}
+            format={dateFormatter}
           />
           <DialogActions sx={{ width: "100%", px: 0 }}>
             <MuiButton onClick={onClose}>{translate("ra.action.cancel")}</MuiButton>
@@ -55,10 +56,13 @@ const PurgeRemoteMediaDialog = ({ open, onClose, onSubmit }) => {
 export const PurgeRemoteMediaButton = (props: ButtonProps) => {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
+  // Placeholder; computed fresh when the dialog opens (see openDialog) so the cutoff is "now" at the
+  // moment of action, not page load: an incident responder purging just-federated media needs it to reach.
+  const [defaultBeforeTs, setDefaultBeforeTs] = useState(0);
   const notify = useNotify();
   const dataProvider = useDataProvider<SynapseDataProvider>();
   const { mutate: purgeRemoteMedia, isPending } = useMutation({
-    mutationFn: (values: DeleteMediaParams) => dataProvider.purgeRemoteMedia(values),
+    mutationFn: (values: Pick<DeleteMediaParams, "before_ts">) => dataProvider.purgeRemoteMedia(values),
     onSuccess: data => {
       if (data.total > 0) {
         notify("purge_remote_media.action.send_success", {
@@ -80,7 +84,10 @@ export const PurgeRemoteMediaButton = (props: ButtonProps) => {
     },
   });
 
-  const openDialog = () => setOpen(true);
+  const openDialog = () => {
+    setDefaultBeforeTs(new Date().getTime());
+    setOpen(true);
+  };
   const closeDialog = () => setOpen(false);
 
   return (
@@ -103,7 +110,12 @@ export const PurgeRemoteMediaButton = (props: ButtonProps) => {
       >
         <CloudOffIcon />
       </Button>
-      <PurgeRemoteMediaDialog open={open} onClose={closeDialog} onSubmit={purgeRemoteMedia} />
+      <PurgeRemoteMediaDialog
+        defaultBeforeTs={defaultBeforeTs}
+        open={open}
+        onClose={closeDialog}
+        onSubmit={purgeRemoteMedia}
+      />
     </>
   );
 };

@@ -40,7 +40,6 @@ export type Progress = {
 
 export interface ImportResult {
   skippedRecords: RaRecord[];
-  erroredRecords: RaRecord[];
   succeededRecords: RaRecord[];
   totalRecordCount: number;
   changeStats: ChangeStats;

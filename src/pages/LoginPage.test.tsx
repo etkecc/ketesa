@@ -77,23 +77,23 @@ const renderUnrestricted = () =>
 
 describe("isValidIssuer", () => {
   it.each([
-    // valid — https any host
+    // valid: https any host
     ["https://auth.example.com/", true],
     ["https://auth.example.com", true],
     ["https://localhost:8007/", true],
     ["https://127.0.0.1:8007", true],
-    // valid — http for intranet/local deployments
+    // valid: http for intranet/local deployments
     ["http://localhost:8007", true],
     ["http://127.0.0.1:8007", true],
     ["http://mas.intranet.corp", true],
     ["http://auth.internal/", true],
-    // invalid — query string or fragment
+    // invalid: query string or fragment
     ["https://auth.example.com/?foo=bar", false],
     ["https://auth.example.com/#section", false],
-    // invalid — non-http scheme
+    // invalid: non-http scheme
     ["ftp://auth.example.com/", false],
     ["javascript:alert(1)", false],
-    // invalid — not a URL
+    // invalid: not a URL
     ["not-a-url", false],
     ["", false],
   ])("isValidIssuer(%s) === %s", (issuer, expected) => {
@@ -127,7 +127,7 @@ describe("LoginPage rendering", () => {
   });
 
   it("renders the username/password fields immediately, before any probe (keyboard-trap fix)", () => {
-    // The inputs must be in the DOM regardless of probe state — that is the
+    // The inputs must be in the DOM regardless of probe state; that is the
     // WCAG 2.1.2 keyboard-trap fix. They are no longer gated on an async result.
     renderUnrestricted();
 
@@ -177,7 +177,7 @@ describe("LoginPage rendering", () => {
   });
 });
 
-describe("LoginPage server probe — capability matrix", () => {
+describe("LoginPage server probe: capability matrix", () => {
   it("password-only server: password Sign-in shown, no SSO/OIDC", async () => {
     mockFlows.mockResolvedValue([{ type: "m.login.password" }]);
     renderSingleRestrict();
@@ -211,7 +211,7 @@ describe("LoginPage server probe — capability matrix", () => {
 
   it("suppress_password without a usable issuer: notice shown, but NO OIDC button (no broken flow)", async () => {
     // A server can advertise oauth_aware_preferred without a valid auth_metadata
-    // issuer (misconfigured or malicious). The OIDC button must NOT render — it
+    // issuer (misconfigured or malicious). The OIDC button must NOT render; it
     // would fire handleOIDC with a null issuer. Only caps.oidc (valid issuer) shows it.
     mockFlows.mockResolvedValue([{ type: "m.login.sso", oauth_aware_preferred: true }]);
     mockAuthMetadata.mockResolvedValue(null);
@@ -254,7 +254,7 @@ describe("LoginPage server probe — capability matrix", () => {
   });
 });
 
-describe("LoginPage server probe — resolving state", () => {
+describe("LoginPage server probe: resolving state", () => {
   it("keeps inputs enabled and disables Sign-in (with 'Checking server…') while resolving", async () => {
     // Never-resolving probes keep the form in the resolving state.
     mockFeatures.mockReturnValue(new Promise(() => undefined));
@@ -271,17 +271,17 @@ describe("LoginPage server probe — resolving state", () => {
   });
 });
 
-describe("LoginPage server probe — staleness guard", () => {
+describe("LoginPage server probe: staleness guard", () => {
   it("a superseded probe never overwrites the fresh one (last URL wins)", async () => {
     const user = userEvent.setup();
     // url1's other three probes (features, authMetadata, serverVersion) resolve immediately via
     // the beforeEach defaults; only url1's flows is held open below. So url1's Promise.allSettled
-    // DOES settle when we release resolveStaleFlows — and the signal.aborted guard in start() is
+    // DOES settle when we release resolveStaleFlows; and the signal.aborted guard in start() is
     // the sole reason url1's late result is discarded. Remove that guard and this test fails.
     let resolveStaleFlows: (value: unknown) => void = () => undefined;
     mockFlows
-      .mockImplementationOnce(() => new Promise(resolve => (resolveStaleFlows = resolve))) // url1 — held open
-      .mockResolvedValue([{ type: "m.login.sso" }]); // url2 — resolves immediately to SSO-only
+      .mockImplementationOnce(() => new Promise(resolve => (resolveStaleFlows = resolve))) // url1: held open
+      .mockResolvedValue([{ type: "m.login.sso" }]); // url2: resolves immediately to SSO-only
     mockAuthMetadata.mockResolvedValueOnce(null).mockResolvedValue({
       issuer: "https://mas.example.com",
       authorization_endpoint: "https://mas.example.com/authorize",
@@ -291,15 +291,15 @@ describe("LoginPage server probe — staleness guard", () => {
 
     const baseUrl = screen.getByRole("textbox", { name: auth.base_url });
     await user.type(baseUrl, "https://stale.example.com");
-    await user.tab(); // start(url1) — flows held pending
+    await user.tab(); // start(url1): flows held pending
     await user.clear(baseUrl);
     await user.type(baseUrl, "https://fresh.example.com");
-    await user.tab(); // start(url2) — aborts url1, resolves to SSO
+    await user.tab(); // start(url2): aborts url1, resolves to SSO
 
     // url2 wins: SSO button appears, no password Sign-in.
     expect(await screen.findByRole("button", { name: auth.sso_sign_in })).toBeInTheDocument();
 
-    // Now let url1 resolve late with password — it must be discarded (signal aborted).
+    // Now let url1 resolve late with password; it must be discarded (signal aborted).
     resolveStaleFlows([{ type: "m.login.password" }]);
     await new Promise(resolve => queueMicrotask(() => resolve(null)));
 

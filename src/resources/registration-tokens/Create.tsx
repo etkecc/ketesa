@@ -14,6 +14,7 @@ import {
 } from "react-admin";
 
 import { useDocTitle } from "../../components/hooks/useDocTitle";
+import { useIsMAS } from "../../providers/data/mas";
 import { dateParser } from "../../utils/date";
 
 const validateToken = [regex(/^[A-Za-z0-9._~-]{0,64}$/)];
@@ -22,6 +23,7 @@ const validateLength = [number(), maxValue(64)];
 
 export const RegistrationTokenCreate = (props: CreateProps) => {
   const translate = useTranslate();
+  const isMAS = useIsMAS();
   useDocTitle(translate("ra.action.create_item", { item: translate("resources.registration_tokens.name") }));
 
   return (
@@ -35,12 +37,14 @@ export const RegistrationTokenCreate = (props: CreateProps) => {
         }
       >
         <TextInput source="token" autoComplete="off" validate={validateToken} resettable />
-        <NumberInput
-          source="length"
-          validate={validateLength}
-          helperText="resources.registration_tokens.helper.length"
-          step={1}
-        />
+        {!isMAS && (
+          <NumberInput
+            source="length"
+            validate={validateLength}
+            helperText="resources.registration_tokens.helper.length"
+            step={1}
+          />
+        )}
         <NumberInput source="uses_allowed" validate={validateUsesAllowed} step={1} />
         <DateTimeInput source="expiry_time" parse={dateParser} />
       </SimpleForm>

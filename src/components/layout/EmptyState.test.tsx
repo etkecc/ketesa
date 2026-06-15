@@ -60,7 +60,7 @@ describe("EmptyState", () => {
   it("uses the resource prop over context when provided", () => {
     mockResourceDefinition.mockReturnValue({ hasCreate: false } as ReturnType<typeof useResourceDefinition>);
     render(<EmptyState resource="rooms" />);
-    // resource label is lowercased via translate — the translate mock includes the name
+    // resource label is lowercased via translate; the translate mock includes the name
     expect(screen.getByText(/no rooms yet/i)).toBeTruthy();
   });
 });

@@ -25,9 +25,9 @@ import {
 } from "react-admin";
 
 import { DeleteMediaParams, SynapseDataProvider } from "../../providers/types";
-import { dateParser } from "../../utils/date";
+import { dateFormatter, dateParser } from "../../utils/date";
 
-const DeleteMediaDialog = ({ open, onClose, onSubmit }) => {
+const DeleteMediaDialog = ({ defaultBeforeTs, open, onClose, onSubmit }) => {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const translate = useTranslate();
@@ -38,7 +38,13 @@ const DeleteMediaDialog = ({ open, onClose, onSubmit }) => {
       <DialogContent>
         <DialogContentText>{translate("delete_media.helper.send")}</DialogContentText>
         <SimpleForm toolbar={false} onSubmit={onSubmit}>
-          <DateTimeInput source="before_ts" label="delete_media.fields.before_ts" defaultValue={0} parse={dateParser} />
+          <DateTimeInput
+            source="before_ts"
+            label="delete_media.fields.before_ts"
+            defaultValue={defaultBeforeTs}
+            parse={dateParser}
+            format={dateFormatter}
+          />
           <NumberInput source="size_gt" label="delete_media.fields.size_gt" defaultValue={0} min={0} step={1024} />
           <BooleanInput source="keep_profiles" label="delete_media.fields.keep_profiles" defaultValue={true} />
           <DialogActions sx={{ width: "100%", px: 0 }}>
@@ -54,6 +60,8 @@ const DeleteMediaDialog = ({ open, onClose, onSubmit }) => {
 export const DeleteMediaButton = (props: ButtonProps) => {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
+  // Placeholder; the real cutoff is computed fresh when the dialog opens (see openDialog).
+  const [defaultBeforeTs, setDefaultBeforeTs] = useState(0);
   const notify = useNotify();
   const dataProvider = useDataProvider<SynapseDataProvider>();
   const { mutate: deleteMedia, isPending } = useMutation({
@@ -79,7 +87,12 @@ export const DeleteMediaButton = (props: ButtonProps) => {
     },
   });
 
-  const openDialog = () => setOpen(true);
+  const openDialog = () => {
+    // before_ts is last-access time; default the cutoff to ~90 days (a quarter) ago, computed fresh
+    // on open, so it sweeps only media untouched that long and spares anything still in use.
+    setDefaultBeforeTs(new Date().getTime() - 90 * 24 * 60 * 60 * 1000);
+    setOpen(true);
+  };
   const closeDialog = () => setOpen(false);
 
   return (
@@ -102,7 +115,7 @@ export const DeleteMediaButton = (props: ButtonProps) => {
       >
         <DeleteSweepIcon />
       </Button>
-      <DeleteMediaDialog open={open} onClose={closeDialog} onSubmit={deleteMedia} />
+      <DeleteMediaDialog defaultBeforeTs={defaultBeforeTs} open={open} onClose={closeDialog} onSubmit={deleteMedia} />
     </>
   );
 };

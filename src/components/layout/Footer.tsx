@@ -52,7 +52,7 @@ const Footer = ({ logoSrc = "./images/logo.webp" }: { logoSrc?: string }) => {
         href="https://matrix.to/#/#ketesa:etke.cc"
         target="_blank"
       >
-        {/* Matrix icon — trademark of The Matrix.org Foundation (https://matrix.org). Use of this logo does not imply endorsement or affiliation. */}
+        {/* Matrix icon, trademark of The Matrix.org Foundation (https://matrix.org). Use of this logo does not imply endorsement or affiliation. */}
         <Box
           component="svg"
           xmlns="http://www.w3.org/2000/svg"

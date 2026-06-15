@@ -1,32 +1,18 @@
-# 🔍 Well-Known Discovery
+# Well-known discovery
 
-By default, Ketesa resolves the homeserver URL you enter on the login page via `/.well-known/matrix/client`, replacing it with the `m.homeserver.base_url` value advertised by the server. This follows the [Matrix spec](https://spec.matrix.org/v1.17/client-server-api/#getwell-knownmatrixclient) and is the correct behavior for most setups.
+By default, Ketesa resolves whatever homeserver URL you give it through the server's `/.well-known/matrix/client` file, following [the Matrix spec](https://spec.matrix.org/v1.17/client-server-api/#getwell-knownmatrixclient). Type `https://example.com` on the login page and Ketesa fetches its well-known, reads `m.homeserver.base_url`, and connects to the address that points at, usually something like `https://matrix.example.com`. The same resolution runs when you sign in with a full Matrix ID: `@user:example.com` looks up well-known for `example.com` and fills in the homeserver field for you. For almost every deployment this is what you want, which is why it's on by default.
 
-The same lookup runs when you type a full Matrix ID (e.g. `@user:example.com`) — Ketesa fetches well-known for `example.com` and auto-fills the homeserver URL field.
+## When to turn it off
 
-## When to disable
+There's one setup where automatic resolution gets in the way: when your admin endpoint lives on a domain that well-known doesn't, and shouldn't, advertise. The common case is a VPN-only or otherwise private admin host. You want to connect to that exact address, but well-known resolution would rewrite it to the public Matrix URL and you'd never reach the admin API.
 
-Some deployments restrict access to `/_synapse/admin` to a separate domain that is **not** advertised in well-known — for example, a VPN-only endpoint. In these cases the automatic URL rewrite replaces your intended admin domain with the public Matrix URL, making it impossible to connect.
+Set `wellKnownDiscovery` to `false` to keep what you type. The login URL is used exactly as entered, and a full Matrix ID resolves straight to `https://<domain>` with no lookup.
 
-Setting `wellKnownDiscovery: false` disables this rewrite:
+One thing this switch does *not* touch: Ketesa still loads its own configuration (`restrictBaseUrl`, `menu`, and the rest) from `/.well-known/matrix/client` either way. The flag governs login-URL resolution only, so turning it off won't stop Ketesa from reading config out of well-known. That's also why the second example below works: Ketesa reads the `wellKnownDiscovery: false` setting from well-known, then stops resolving login URLs through it.
 
-- The homeserver URL field is **not** modified after entry — what you type is what gets used.
-- When you type a full Matrix ID, the homeserver URL is derived directly from the MXID domain (`https://<domain>`) without a well-known lookup.
+## Configuration
 
-> 📝 **Note:** This only affects URL canonicalization on the login page. Ketesa configuration (e.g. `restrictBaseUrl`, `menu`) is still loaded from `/.well-known/matrix/client` as usual.
-
-## ⚙️ Configuration
-
-`wellKnownDiscovery` accepts a boolean value:
-
-| Value | Behavior |
-|---|---|
-| `true` (default) | Resolve homeserver URL via `/.well-known/matrix/client` |
-| `false` | Use the entered URL as-is, skip well-known lookup |
-
-[Configuration options](config.md)
-
-### config.json
+In a standalone `config.json`:
 
 ```json
 {
@@ -34,7 +20,7 @@ Setting `wellKnownDiscovery: false` disables this rewrite:
 }
 ```
 
-### `/.well-known/matrix/client`
+In `/.well-known/matrix/client`, under the `cc.etke.ketesa` key:
 
 ```json
 {
@@ -43,3 +29,7 @@ Setting `wellKnownDiscovery: false` disables this rewrite:
   }
 }
 ```
+
+---
+
+See also: [Configuration](./config.md) · [Restrict homeserver](./restrict-hs.md) · [Documentation index](./README.md)

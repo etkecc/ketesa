@@ -2,6 +2,9 @@ import { Identifier } from "ra-core";
 
 import { GetConfig, SubscribeConfig } from "../utils/config";
 
+// Structural guard only: the server-name class admits "/" and control characters.
+// Safe for callers that pass the value as a JSON body parameter; do NOT rely on this
+// as a guard for values used in URL-path construction without further encoding.
 const mxidPattern = /^@[^@:]+:[^@]+$/;
 
 /*
@@ -11,7 +14,7 @@ const mxidPattern = /^@[^@:]+:[^@]+$/;
  */
 export const isMXID = (id: string | Identifier): boolean => mxidPattern.test(id as string);
 
-// Cache for isSystemUser results — cleared when config changes
+// Cache for isSystemUser results; cleared when config changes
 const asManagedCache = new Map<string, boolean>();
 SubscribeConfig(() => asManagedCache.clear());
 

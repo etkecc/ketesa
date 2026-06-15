@@ -53,7 +53,7 @@ const LoginFormBox = styled(Box, {
     backgroundSize: "cover",
     backgroundPosition: "center",
 
-    // Orbs layer — only shown when no custom background
+    // Orbs layer, only shown when no custom background
     ...(!hasCustomBg && {
       "&::before": {
         content: '""',
@@ -61,13 +61,13 @@ const LoginFormBox = styled(Box, {
         inset: 0,
         zIndex: 0,
         background: [
-          // Large primary orb — top-left
+          // Large primary orb (top-left)
           `radial-gradient(circle 320px at 15% 25%, ${isDark ? "rgba(244,147,0,0.15)" : "rgba(24,88,213,0.12)"} 0%, transparent 70%)`,
-          // Medium accent orb — bottom-right
+          // Medium accent orb (bottom-right)
           `radial-gradient(circle 250px at 80% 75%, ${isDark ? "rgba(244,147,0,0.10)" : "rgba(244,147,0,0.08)"} 0%, transparent 70%)`,
-          // Small secondary orb — top-right
+          // Small secondary orb (top-right)
           `radial-gradient(circle 200px at 75% 20%, ${isDark ? "rgba(244,147,0,0.08)" : "rgba(24,88,213,0.06)"} 0%, transparent 70%)`,
-          // Subtle warm orb — bottom-left
+          // Subtle warm orb (bottom-left)
           `radial-gradient(circle 280px at 25% 80%, ${isDark ? "rgba(244,147,0,0.06)" : "rgba(24,88,213,0.05)"} 0%, transparent 70%)`,
         ].join(", "),
         animation: `${float1} 20s ease-in-out infinite`,
@@ -78,11 +78,11 @@ const LoginFormBox = styled(Box, {
         inset: 0,
         zIndex: 0,
         background: [
-          // Drifting orange orb — center-left
+          // Drifting orange orb (center-left)
           `radial-gradient(circle 220px at 35% 55%, ${isDark ? "rgba(244,147,0,0.10)" : "rgba(24,88,213,0.08)"} 0%, transparent 70%)`,
-          // Drifting orange orb — center-right
+          // Drifting orange orb (center-right)
           `radial-gradient(circle 180px at 65% 45%, ${isDark ? "rgba(244,147,0,0.08)" : "rgba(244,147,0,0.06)"} 0%, transparent 70%)`,
-          // Small accent — bottom-center
+          // Small accent (bottom-center)
           `radial-gradient(circle 150px at 50% 85%, ${isDark ? "rgba(255,192,96,0.06)" : "rgba(217,119,6,0.04)"} 0%, transparent 70%)`,
         ].join(", "),
         animation: `${float2} 25s ease-in-out infinite, ${pulse} 8s ease-in-out infinite`,
@@ -171,7 +171,7 @@ const LoginFormBox = styled(Box, {
       padding: "0 1.5rem 1.5rem 1.5rem",
     },
     // Buttons live inside .form (which already supplies the 1.5rem horizontal
-    // padding), so .actions adds none of its own — otherwise the buttons sit
+    // padding), so .actions adds none of its own; otherwise the buttons sit
     // inset from the inputs above them and the column looks misaligned.
     [`& .actions`]: {
       padding: 0,

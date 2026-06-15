@@ -1,190 +1,73 @@
-# 🖼️ Media Management
+# Media management
 
-Ketesa provides granular media controls at the file, user, and room level — useful for content moderation and storage management. You can quarantine harmful content, protect important media from accidental quarantine, delete individual files or entire user libraries, and purge the remote media cache.
+Ketesa's media controls let you quarantine, protect, and delete media at the file, user, and room level, and purge or delete media in bulk from the Statistics page. Most of it is reversible. The deletions are not, and a few controls behave less obviously than their labels suggest, so read those before you reach for them.
 
----
+Quarantine and protect are mutually exclusive, and the interface enforces it by swapping controls rather than disabling them in place: a protected file shows a greyed-out **Protected** where its quarantine button would be, and a quarantined file shows a greyed-out **In quarantine** where its protect button would be. A control that isn't there is telling you the file's state, not hiding a bug.
 
-## 🗂️ Concepts
+Two more things do less, or more, than their labels imply. The room **Delete all media** action only ever removes local media from unencrypted events, so media in encrypted rooms and media hosted on other servers is never touched. And the Statistics **Delete media** sweep defaults its cutoff to three months ago, so confirming it unchanged removes every local file nobody has accessed in the last quarter.
 
-| Operation | What it does | Reversible? |
-|-----------|-------------|-------------|
-| Quarantine | Blocks access to the media for all users | ✅ Yes (unquarantine) |
-| Protect | Prevents the media from being quarantined | ✅ Yes (unprotect) |
-| Delete | Permanently removes the media from the server | ❌ No |
-| Purge remote cache | Removes locally cached copies of media fetched from remote servers | ❌ No |
+None of this changes with your auth mode. Every media action calls the Synapse admin API directly and behaves the same under native Synapse or Matrix Authentication Service (MAS).
 
-> 📝 Quarantine and protect are mutually exclusive states for a single file. A protected file cannot be quarantined, and an already-quarantined file cannot be protected until it is first unquarantined.
+## Contents
 
----
+- [What the operations do](#what-the-operations-do)
+- [Per-file actions](#per-file-actions)
+- [A user's media](#a-users-media)
+- [A room's media](#a-rooms-media)
+- [Purging the remote media cache](#purging-the-remote-media-cache)
+- [Deleting local media by age and size](#deleting-local-media-by-age-and-size)
 
-## 📄 Per-file Operations
+## What the operations do
 
-Per-file actions are available in two places:
+| Operation | What it does | Reversible |
+|---|---|---|
+| Quarantine | Blocks access to the file for everyone | Yes, with unquarantine |
+| Protect | Marks a file safe so it can't be quarantined | Yes, with unprotect |
+| Delete | Removes the file from your server's disk | No |
+| Purge remote cache | Drops locally cached copies of media from other servers | No, but remote media re-fetches on next use |
 
-- **User edit page → Media tab** — shows all media uploaded by the user, with per-row action buttons
-- **Room show page → Media tab** — shows all media uploaded into the room, with a per-row delete button
+## Per-file actions
 
-The following buttons appear on each file row in the user Media tab:
+Per-file actions live on each row of a Media tab, and the tab exists in two places with different reach. The user edit page (Users, open a user, **Edit**, **Media** tab) carries the full set. The room show page (Rooms, open a room, **Show**, **Media** tab) carries only a per-row **Delete**.
 
-| Button label | What it does | When it appears |
-|--------------|-------------|-----------------|
-| Quarantine | Quarantines the file, blocking all access | File is not protected and not already quarantined |
-| Unquarantine | Lifts the quarantine on the file | File is currently quarantined |
-| Protect | Marks the file as safe from quarantine | File is not quarantined and not already protected |
-| Unprotect | Removes the protection flag | File is currently protected |
-| Delete | Permanently deletes the individual file | Always visible |
+A row has at most three controls, and which ones show depends on the file's state. One slot is the quarantine control: it reads **Quarantine**, or **Unquarantine** when the file is already quarantined, or a disabled **Protected** when the file is protected. A second slot is the protection control: **Protect**, or **Unprotect** when already protected, or a disabled **In quarantine** when the file is quarantined. **Delete** is always present and removes that one file for good.
 
-> 📝 The quarantine button is replaced by a disabled "Protected" indicator when the file is safe from quarantine. The protect button is replaced by a disabled "In quarantine" indicator when the file is already quarantined.
+## A user's media
 
----
+The Media tab on a user's edit page lists every file that user uploaded, each with the per-file controls above. Two bulk buttons sit at the top of the tab.
 
-## 👤 Per-user Operations
+**Quarantine all media** quarantines every local file the user uploaded, after a confirmation. Media the user sent from another homeserver isn't covered: this endpoint is local-only.
 
-**Location:** Users → select a user → Edit → **Media** tab
+**Delete all media** permanently deletes every file the user uploaded. The deletion runs as a single server-side call, so you can close the dialog and let it finish; the result is reported when the call returns.
 
-The Media tab on the user edit page shows all media uploaded by that user, with per-file action buttons (see [Per-file Operations](#-per-file-operations) above).
+To act on several users at once, select them in the Users list and use **Delete all media** in the bulk toolbar. It deletes each selected user's media and reports how many succeeded and how many failed. Quarantine isn't offered in bulk here; quarantining all of a user's media is a single-user action.
 
-At the top of the tab, bulk action buttons are available:
+## A room's media
 
-| Button label | What it does | When it appears |
-|--------------|-------------|-----------------|
-| Quarantine all media | Quarantines every media file uploaded by the user, after confirmation | Always visible |
-| Delete all media | Permanently deletes every media file uploaded by the user, after confirmation | Always visible |
+The room's Media tab lists every file uploaded into the room, each with a **Delete** button, and two bulk actions sit above the list.
 
-> ⚠️ **Quarantine all media** affects every file the user has ever uploaded to the server. This cannot be undone in bulk — you would need to unquarantine each file individually. Use with care.
+**Quarantine all media** quarantines all local and remote media in the room once you confirm. Reach for it on a room carrying reported illegal or harmful content.
 
-> ⚠️ **Delete all media** permanently removes all media uploaded by the user. This cannot be undone. The dialog runs in the foreground — do not close it until deletion is complete.
+**Delete all media** permanently removes the room's local media, one file at a time with a live progress count. It only ever removes local media from unencrypted events, so encrypted rooms and media hosted on other servers are never affected. On a single room the button appears only for unencrypted rooms, and because it deletes file by file from your browser, its dialog stays in the foreground and asks you not to close it until it finishes: closing stops the run partway. The same action is available over a selection from the Rooms bulk toolbar, which reports how many rooms succeeded and how many failed.
 
----
+## Purging the remote media cache
 
-## 🚪 Per-room Operations
+Open **Media** in the sidebar, then **Purge remote media** in the toolbar. When your server federates, it caches copies of avatars, images, and files from the homeservers it talks to. This drops those cached copies. It doesn't touch your own server's uploads or the originals on their source servers, and a remote file is simply re-fetched the next time someone needs it.
 
-**Location:** Rooms → select a room → Show → **Media** tab
+The one field, **last accessed before**, defaults to the current time, which purges the whole cache. That default is deliberate: when harmful content has federated in from a remote server and you need every cached copy gone now, leave the field alone and confirm. Set an earlier cutoff only for routine cleanup, when you want to drop stale cache but keep media that's still in use.
 
-The Media tab on the room show page lists all media uploaded into that room. Each row has an individual **Delete** button.
+## Deleting local media by age and size
 
-At the top of the tab, bulk action buttons are available:
+Open **Media** in the sidebar, then **Delete media** in the same toolbar. This removes local media from your server's disk, including thumbnails and your cached copies of remote media. Media uploaded to an external media repository is left alone.
 
-| Button label | What it does | When it appears |
-|--------------|-------------|-----------------|
-| Quarantine all media | Quarantines every media file uploaded in the room, after confirmation | Always visible |
-| Delete all media | Permanently deletes all local media in the room, after confirmation | Only for unencrypted rooms |
+| Field | What it does |
+|---|---|
+| Last accessed before | Only delete files not accessed since this time. Defaults to three months ago. |
+| Larger than (in bytes) | Only delete files above this size. Steps in 1024-byte increments. |
+| Keep profile images | Exclude profile and avatar images from the sweep. On by default. |
 
-> ⚠️ **Quarantine all media** affects all files uploaded to the room by all members. Use this for rooms with reported illegal or harmful content.
-
-> ⚠️ **Delete all media** permanently removes all local media in the room. Only local media from unencrypted rooms is affected — media from external servers and encrypted rooms is excluded. The dialog runs in the foreground and shows live progress — do not close it until deletion is complete.
-
-> 📝 It is not possible to delete media that has been uploaded to external media repositories. Only media hosted on your own server is affected.
+The cutoff is last-access time, not upload time, so the three-month default sweeps files nobody has touched in a quarter and leaves anything still in use. Deleted files can't be recovered, so start with a conservative cutoff and size threshold before a broad sweep.
 
 ---
 
-## 🌐 Purge Remote Media Cache
-
-**Location:** Statistics → Users' media → toolbar → **Purge remote media** button
-
-When your server federates with other Matrix homeservers, it caches copies of media (avatars, images, files) from those remote servers. Over time this cache can grow large. The purge remote media action removes these locally cached copies.
-
-> 📝 This action only affects your server's local cache of remote media. It does not affect media uploaded to your own server's media repository, and does not delete the originals from their source servers. Remote users can re-fetch media after a purge.
-
-**Dialog options:**
-
-| Field | Description |
-|-------|-------------|
-| last access before | Only purge remote media that has not been accessed since this date/time. Leave at the default (epoch) to purge all cached remote media. |
-
----
-
-## 🗑️ Delete Local Media
-
-**Location:** Statistics → Users' media → toolbar → **Delete media** button
-
-This action deletes local media from your server's disk, including thumbnails and downloaded copies of remote media. It does not affect media uploaded to external media repositories.
-
-**Dialog options:**
-
-| Field | Description |
-|-------|-------------|
-| last access before | Only delete media that has not been accessed since this date/time |
-| Larger than (in bytes) | Only delete media files larger than this size. Step size is 1024 bytes. |
-| Keep profile images | When enabled, profile avatars are excluded from deletion (default: on) |
-
-> ⚠️ Deleted media cannot be recovered. Files that match all specified criteria are removed permanently from disk.
-
----
-
-## 🔒 How to Quarantine a File
-
-1. Navigate to **Users** and open the user who uploaded the file.
-2. Click **Edit**, then open the **Media** tab.
-3. Find the file in the list. The **Quarantine** button appears on rows where the file is not protected and not already quarantined.
-4. Click **Quarantine**. The button changes to **Unquarantine** immediately on success.
-
-> 💡 To undo, click the **Unquarantine** button on the same row.
-
----
-
-## 🛡️ How to Protect Media from Accidental Quarantine
-
-1. Navigate to **Users** and open the user who uploaded the file.
-2. Click **Edit**, then open the **Media** tab.
-3. Find the file in the list. The **Protect** button appears on rows where the file is not quarantined and not already protected.
-4. Click **Protect**. The button changes to **Unprotect** immediately on success.
-
-> 💡 A protected file cannot be quarantined — the quarantine button is replaced by a disabled "Protected" indicator. To remove protection later, click **Unprotect**.
-
----
-
-## 🗑️ How to Delete All Media for a User
-
-> ⚠️ Deletion is irreversible. All files are permanently removed from disk. There is no undo.
-
-**Single user:**
-
-1. Navigate to **Users** and open the user.
-2. Click **Edit**, then open the **Media** tab.
-3. Click **Delete all media** at the top of the tab.
-4. Confirm in the dialog. The dialog runs in the foreground — do not close it until complete.
-
-**Multiple users at once (bulk):**
-
-1. Navigate to **Users**.
-2. Select the users using the checkboxes on the left.
-3. Click **Delete all media** in the bulk action toolbar that appears at the top.
-4. Confirm in the dialog. A summary notification reports how many succeeded and how many failed.
-
-**Server-wide delete by age/size (Statistics):**
-
-The **Delete media** button (found in Statistics → Users' media toolbar) deletes media server-wide based on age and size filters:
-
-1. Navigate to **Statistics → Users' media**.
-2. Click **Delete media** in the top toolbar.
-3. Set a **last access before** date to target old unused files.
-4. Optionally set a **Larger then (in bytes)** threshold to target large files only.
-5. Toggle **Keep profile images** off if you also want to remove avatars.
-6. Click **Delete media** to confirm.
-
-> 💡 Run with conservative filters first (e.g., a recent cutoff date and large size threshold) to limit the blast radius before doing a broad sweep.
-
----
-
-## 🚪 How to Delete All Media for a Room
-
-> ⚠️ Only local media from unencrypted rooms is affected. Media from encrypted rooms and external servers is excluded. Deletion is irreversible.
-
-**Single room:**
-
-1. Navigate to **Rooms** and open an unencrypted room.
-2. Click **Show**, then open the **Media** tab.
-3. Click **Delete all media** at the top of the tab.
-4. Confirm in the dialog. The dialog shows live progress and runs in the foreground — do not close it until complete.
-
-**Multiple rooms at once (bulk):**
-
-1. Navigate to **Rooms**.
-2. Select the rooms using the checkboxes on the left.
-3. Click **Delete all media** in the bulk action toolbar that appears at the top.
-4. Confirm in the dialog. Encrypted rooms are skipped automatically. A summary notification reports the result.
-
----
-
-**See also:** [User management](./user-management.md) · [Room management](./room-management.md) · [Server statistics](./server-statistics.md) · [Documentation index](./README.md)
+See also: [User management](./user-management.md) · [Room management](./room-management.md) · [Server statistics](./server-statistics.md) · [Documentation index](./README.md)

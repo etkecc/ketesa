@@ -54,11 +54,15 @@ export const PurgeHistoryButton = () => {
   const roomName = (record.name || record.canonical_alias || record.id) as string;
 
   const handleClose = () => {
+    stopPolling();
+    if (purgeStatus === "active") {
+      // Purge continues server-side; surface that before dropping UI tracking
+      notify("resources.rooms.action.purge_history.background_note", { type: "info" });
+    }
     setOpen(false);
     setPurgeDate("");
     setDeleteLocalEvents(false);
     setPurgeStatus(null);
-    stopPolling();
   };
 
   const handlePurge = async () => {

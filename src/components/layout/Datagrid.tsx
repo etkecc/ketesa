@@ -27,7 +27,7 @@ type DatagridBodyProps = React.ComponentPropsWithRef<typeof DatagridBody>;
 type DatagridRowProps = React.ComponentPropsWithRef<typeof DatagridRow>;
 type DatagridConfigurableProps = React.ComponentProps<typeof DatagridConfigurable>;
 
-/** Specifies the row's accessible label — either a field name or a function. */
+/** Specifies the row's accessible label: either a field name or a function. */
 type RowLabel = ((record: RaRecord) => string) | string;
 
 type AccessibleRowProps = DatagridRowProps & {
@@ -92,20 +92,20 @@ const formatCellValue = (value: unknown, translate: Translator): string => {
  * RA's DatagridRow does NOT spread field props onto DatagridCell/TableCell, so
  * the title ends up on the field's own rendered element (e.g. a Typography span)
  * via sanitizeFieldRestProps. This provides hover tooltips on cell content rather
- * than on the <td> itself — still useful for column identification on hover.
+ * than on the <td> itself, still useful for column identification on hover.
  *
  * Field type dispatch (run in order, first match wins):
- *   1. DateField      — detected via child.type === DateField; formats the raw
+ *   1. DateField      : detected via child.type === DateField; formats the raw
  *      timestamp using new Date(v).toLocaleString(locales, options) mirroring
  *      what the field itself renders.
- *   2. ReferenceField — detected via typeof props.reference === "string".
+ *   2. ReferenceField : detected via typeof props.reference === "string".
  *      Uses child.type === ReferenceField instead would be cleaner, but that
  *      import triggers TS6133 ("declared but its value is never read") because
  *      TypeScript does not consider a runtime === comparison a value read.
  *      The same TS6133 constraint applies to FunctionField below.
- *   3. FunctionField  — detected via typeof props.render === "function".
+ *   3. FunctionField  : detected via typeof props.render === "function".
  *      Calls render(record) and coerces the result to a string.
- *   4. Everything else — formatCellValue(record[source], translate).
+ *   4. Everything else: formatCellValue(record[source], translate).
  */
 const injectCellTitles = (
   children: ReactNode,
@@ -132,7 +132,7 @@ const injectCellTitles = (
       }
     } else if (typeof props.reference === "string") {
       // ReferenceField: duck-typed by the `reference` prop (child.type === ReferenceField
-      // triggers TS6133 — the TypeScript compiler treats the import as unread).
+      // triggers TS6133, the TypeScript compiler treats the import as unread).
       //
       // Strategy: read the first child element's `source` (e.g. "displayname") and
       // look it up on the OUTER record. Many Synapse API endpoints embed display

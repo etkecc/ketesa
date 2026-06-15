@@ -1,45 +1,15 @@
-# 🏷️ User Badges
+# User badges
 
-Ketesa displays role badges on user avatars throughout the interface — in the users list, the user detail view, and anywhere an avatar appears. Each badge has a tooltip explaining what it means, and multiple badges can appear on a single avatar when a user has more than one role (e.g., a bot that is also system-managed).
+Ketesa marks user avatars with a small emoji badge that signals the account type. The badge shows up anywhere an avatar appears: the users list, the user detail view, room member lists. Hover it to get a tooltip naming the role.
 
-This makes it easy to identify account types at a glance without opening individual user records — especially useful when managing large servers with many bridge puppets, bots, and federated users.
+| Badge | Role | Appears on |
+|-------|------|------------|
+| 🧙 | You | Your own logged-in account |
+| 🛡️ | System-managed | Appservice-managed accounts such as bridge puppets (see [system users](./system-users.md)) |
+| 👑 | Admin | Homeserver administrators |
+| 🌐 | Federated | Remote users from other homeservers |
+| 🤖 | Bot | Local accounts with `user_type: bot` |
+| 📞 | Support | Local accounts with `user_type: support` |
+| 👤 | Regular | Local accounts with no other role |
 
-| Badge | Who it appears on |
-|-------|------------------|
-| 🧙 **You** | Your own account |
-| 👑 **Admin** | Homeserver administrators |
-| 🛡️ **Appservice/System-managed** | Bridge puppets and other [appservice-managed accounts](./system-users.md) |
-| 🤖 **Bot** | Accounts with `user_type: bot` |
-| 📞 **Support** | Accounts with `user_type: support` |
-| 👤 **Regular User** | Standard local accounts |
-| 🌐 **Federated** | Remote users from other homeservers |
-
-## 📌 Available Badges
-
-### 🧙 You
-
-This badge is displayed on your user's avatar. The tooltip for this badge contains additional information, e.g.: `You (Admin)`.
-
-### 👑 Admin
-
-This badge is displayed on homeserver admins' avatars. Tooltip: `Admin`.
-
-### 🛡️ Appservice/System-managed
-
-This badge is displayed on users that are managed by an appservice (or system). [Learn more about system users](./system-users.md). The tooltip for this badge contains additional information, e.g.: `System-managed (Bot)`.
-
-### 🤖 Bot
-
-This badge is displayed on bots' avatars (users with the `user_type` set to `bot`). Tooltip: `Bot`.
-
-### 📞 Support
-
-This badge is displayed on users that are part of the support team (users with the `user_type` set to `support`). Tooltip: `Support`.
-
-### 👤 Regular User
-
-This badge is displayed on regular users' avatars. Tooltip: `Regular User`.
-
-### 🌐 Federated (Remote) User
-
-This badge is displayed on federated (remote) users' avatars. Tooltip: `Federated User`.
+A user can fit more than one of these, and only a single badge shows: the most specific one wins, working from the top of the table down, with your own account at the highest priority and a plain regular user at the bottom. The system-managed and "you" badges fold the underlying role into their tooltip, so a system-managed bot reads as "System-managed (Bot)" and your own admin account reads as "You (Admin)".

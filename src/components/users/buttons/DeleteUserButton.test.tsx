@@ -3,7 +3,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// MUI's useMediaQuery walks window.matchMedia. jsdom doesn't ship one — polyfill before render.
+// MUI's useMediaQuery walks window.matchMedia. jsdom doesn't ship one; polyfill before render.
 if (typeof window !== "undefined" && !window.matchMedia) {
   Object.defineProperty(window, "matchMedia", {
     writable: true,
@@ -80,7 +80,7 @@ beforeEach(() => {
   jsonClientMock.mockResolvedValue({ json: {} });
 });
 
-describe("DeleteUserButton (MAS mode) — split MAS / Synapse-only dispatch", () => {
+describe("DeleteUserButton (MAS mode): split MAS / Synapse-only dispatch", () => {
   it("mixed selection: exactly one MAS deactivate + exactly one Synapse v2 PUT", async () => {
     const user = userEvent.setup();
     render(
@@ -160,7 +160,7 @@ describe("DeleteUserButton (MAS mode) — split MAS / Synapse-only dispatch", ()
     render(<DeleteUserButton {...props} />);
     await openConfirmDialog(user);
 
-    // Second run produces exactly the same shape — no accumulation, no fan-out doubling per record.
+    // Second run produces exactly the same shape; no accumulation, no fan-out doubling per record.
     expect(masDeactivateUserMock).toHaveBeenCalledTimes(2);
     expect(jsonClientMock.mock.calls.filter(([, opts]) => opts?.method === "PUT")).toHaveLength(2);
   });
