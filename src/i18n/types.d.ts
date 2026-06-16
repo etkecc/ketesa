@@ -209,6 +209,14 @@ export interface SynapseTranslationMessages extends TranslationMessages {
         sent_invite_count: string;
         cumulative_joined_room_count: string;
       };
+      confirm: {
+        erase_title: string;
+        erase_body: string;
+        erase_type_prompt: string;
+        escalate_title: string;
+        escalate_deactivate: string;
+        escalate_admin: string;
+      };
       action: {
         erase: string;
         erase_avatar: string;

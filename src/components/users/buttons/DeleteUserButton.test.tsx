@@ -165,3 +165,53 @@ describe("DeleteUserButton (MAS mode): split MAS / Synapse-only dispatch", () =>
     expect(jsonClientMock.mock.calls.filter(([, opts]) => opts?.method === "PUT")).toHaveLength(2);
   });
 });
+
+describe("DeleteUserButton: single-selection type-the-MXID gate", () => {
+  it("single selection: Confirm stays disabled until the exact MXID is typed", async () => {
+    const user = userEvent.setup();
+    render(
+      <DeleteUserButton
+        selectedIds={["@alice:hs"]}
+        confirmTitle="t"
+        confirmContent="c"
+        masIdMap={{ "@alice:hs": "01ULIDALICE" }}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "ra.action.delete" }));
+    const dialog = await screen.findByRole("dialog");
+    const confirm = within(dialog).getByRole("button", { name: /ra\.action\.confirm/ });
+
+    expect(confirm).toBeDisabled();
+
+    await user.type(within(dialog).getByRole("textbox"), "@alice:wrong");
+    expect(confirm).toBeDisabled();
+    expect(masDeactivateUserMock).not.toHaveBeenCalled();
+
+    await user.clear(within(dialog).getByRole("textbox"));
+    await user.type(within(dialog).getByRole("textbox"), "@alice:hs");
+    expect(confirm).toBeEnabled();
+
+    await user.click(confirm);
+    expect(masDeactivateUserMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("bulk selection (length > 1): no type-to-confirm field, Confirm fires directly", async () => {
+    const user = userEvent.setup();
+    render(
+      <DeleteUserButton
+        selectedIds={["@alice:hs", "@bob:hs"]}
+        confirmTitle="t"
+        confirmContent="c"
+        masIdMap={{ "@alice:hs": "01ULIDALICE", "@bob:hs": "01ULIDBOB" }}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "ra.action.delete" }));
+    const dialog = await screen.findByRole("dialog");
+
+    expect(within(dialog).queryByRole("textbox")).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: /ra\.action\.confirm/ }));
+    expect(masDeactivateUserMock).toHaveBeenCalledTimes(2);
+  });
+});

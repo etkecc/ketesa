@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  TextField,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
@@ -52,6 +53,7 @@ const DeleteUserButton: React.FC<DeleteUserButtonProps> = props => {
   const [deleteMedia, setDeleteMedia] = useState(false);
   const [redactEvents, setRedactEvents] = useState(false);
   const [redactStatus, setRedactStatus] = useState<null | "active" | "done">(null);
+  const [typedValue, setTypedValue] = useState("");
 
   const notify = useNotify();
   const redirect = useRedirect();
@@ -73,7 +75,16 @@ const DeleteUserButton: React.FC<DeleteUserButtonProps> = props => {
     return stopPolling;
   }, [stopPolling]);
 
-  const handleDialogOpen = () => setOpen(true);
+  const handleDialogOpen = () => {
+    setTypedValue("");
+    setOpen(true);
+  };
+
+  // Single-user delete is an irreversible erase (or, in MAS mode, a deactivate presented as erase):
+  // gate Confirm behind typing the exact MXID. Bulk (length > 1) keeps its current frictionless dialog.
+  const singleSelection = recordIds.length === 1;
+  const expectedMxid = singleSelection ? String(recordIds[0]) : "";
+  const typedMatches = !singleSelection || typedValue.trim() === expectedMxid.trim();
 
   const performMASDeactivate = async () => {
     try {
@@ -141,6 +152,9 @@ const DeleteUserButton: React.FC<DeleteUserButtonProps> = props => {
   };
 
   const handleConfirm = async () => {
+    // Defense-in-depth: the Confirm button is already disabled until the MXID matches, but guard the
+    // handler too so a future refactor wiring a different trigger can't fire the erase ungated.
+    if (!typedMatches) return;
     if (!redactEvents) {
       setOpen(false);
       await performDelete();
@@ -245,6 +259,18 @@ const DeleteUserButton: React.FC<DeleteUserButtonProps> = props => {
               </>
             )}
           </SimpleForm>
+          {singleSelection && (
+            <TextField
+              value={typedValue}
+              onChange={e => setTypedValue(e.target.value)}
+              label={translate("resources.users.confirm.erase_type_prompt", { mxid: expectedMxid })}
+              fullWidth
+              autoFocus
+              autoComplete="off"
+              disabled={loading}
+              sx={{ mt: 1 }}
+            />
+          )}
           {redactStatus === "active" && (
             <>
               <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 1 }}>
@@ -262,11 +288,11 @@ const DeleteUserButton: React.FC<DeleteUserButtonProps> = props => {
             {translate("ra.action.cancel")}
           </MuiButton>
           <MuiButton
-            disabled={loading}
+            disabled={loading || !typedMatches}
             aria-busy={loading}
             onClick={handleConfirm}
             className={"ra-confirm RaConfirm-confirmPrimary"}
-            autoFocus
+            autoFocus={!singleSelection}
             startIcon={loading ? <CircularProgress size={16} aria-hidden="true" /> : <ActionCheck />}
           >
             {translate("ra.action.confirm")}

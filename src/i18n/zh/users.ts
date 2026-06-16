@@ -72,6 +72,14 @@ const users = {
     federated: "联邦用户",
     system_managed: "系统管理",
   },
+  confirm: {
+    erase_title: "永久抹除此用户",
+    erase_body: "此操作将把该用户标记为 GDPR 抹除状态并停用其账户。抹除操作不可逆，无法撤销，亦无法恢复。",
+    erase_type_prompt: "请输入完整的用户 ID（%{mxid}）以确认操作",
+    escalate_title: "确认以下更改",
+    escalate_deactivate: "您即将停用此账户。",
+    escalate_admin: "您即将授予该用户服务器管理员权限。",
+  },
   action: {
     erase: "抹除用户信息",
     erase_avatar: "抹掉头像",

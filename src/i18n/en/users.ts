@@ -65,6 +65,15 @@ const users = {
     cumulative_joined_room_count:
       "Total number of rooms this user has ever joined, including rooms they have since left or been banned from.",
   },
+  confirm: {
+    erase_title: "Erase this user permanently",
+    erase_body:
+      "This marks the user as GDPR-erased and deactivates the account. Erasure is permanent and cannot be undone. There is no restore.",
+    erase_type_prompt: "Type the full user ID (%{mxid}) to confirm",
+    escalate_title: "Confirm these changes",
+    escalate_deactivate: "You are about to deactivate this account.",
+    escalate_admin: "You are about to grant this user server administrator privileges.",
+  },
   action: {
     erase: "Erase user data",
     erase_avatar: "Erase avatar",

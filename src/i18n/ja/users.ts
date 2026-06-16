@@ -64,6 +64,15 @@ const users = {
     sent_invite_count: "このユーザーが全ルームで送信した招待の合計数。",
     cumulative_joined_room_count: "このユーザーが参加したことのあるルームの累計数（退出、追放されたルームを含む）。",
   },
+  confirm: {
+    erase_title: "このユーザーを完全に消去する",
+    erase_body:
+      "このユーザーはGDPR消去済みとしてマークされ、アカウントが無効化されます。消去は永続的であり、元に戻すことはできません。復元手段はありません。",
+    erase_type_prompt: "確認するには、ユーザーID（%{mxid}）を完全に入力してください",
+    escalate_title: "この変更を確認してください",
+    escalate_deactivate: "このアカウントを無効化しようとしています。",
+    escalate_admin: "このユーザーにサーバー管理者権限を付与しようとしています。",
+  },
   action: {
     erase: "ユーザーのデータを消去",
     erase_avatar: "アバターを消去",

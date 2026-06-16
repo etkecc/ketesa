@@ -75,6 +75,15 @@ const users = {
     federated: "Föderierter Benutzer",
     system_managed: "Systemverwalteter Benutzer",
   },
+  confirm: {
+    erase_title: "Diesen Benutzer dauerhaft löschen",
+    erase_body:
+      "Dadurch wird der Benutzer als GDPR-gelöscht markiert und das Konto deaktiviert. Die Löschung ist endgültig und kann nicht rückgängig gemacht werden. Eine Wiederherstellung ist nicht möglich.",
+    erase_type_prompt: "Geben Sie die vollständige Benutzer-ID (%{mxid}) ein, um zu bestätigen",
+    escalate_title: "Diese Änderungen bestätigen",
+    escalate_deactivate: "Sie sind dabei, dieses Konto zu deaktivieren.",
+    escalate_admin: "Sie sind dabei, diesem Benutzer Serveradministratorrechte zu erteilen.",
+  },
   action: {
     erase: "Benutzerdaten löschen",
     erase_avatar: "Avatar löschen",

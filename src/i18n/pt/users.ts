@@ -65,6 +65,15 @@ const users = {
     cumulative_joined_room_count:
       "Número total de salas a que este utilizador alguma vez se juntou, incluindo salas que entretanto abandonou ou de que foi banido.",
   },
+  confirm: {
+    erase_title: "Apagar este utilizador permanentemente",
+    erase_body:
+      "Esta ação marca o utilizador como apagado ao abrigo do GDPR e desativa a conta. A eliminação é permanente e não pode ser revertida. Não existe forma de restaurar.",
+    erase_type_prompt: "Introduza o ID completo do utilizador (%{mxid}) para confirmar",
+    escalate_title: "Confirmar estas alterações",
+    escalate_deactivate: "Está prestes a desativar esta conta.",
+    escalate_admin: "Está prestes a conceder a este utilizador privilégios de administrador do servidor.",
+  },
   action: {
     erase: "Apagar dados do utilizador",
     erase_avatar: "Apagar avatar",

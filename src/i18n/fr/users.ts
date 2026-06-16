@@ -74,6 +74,15 @@ const users = {
     federated: "Fédéré",
     system_managed: "Géré par le système",
   },
+  confirm: {
+    erase_title: "Effacer définitivement cet utilisateur",
+    erase_body:
+      "Cette action marque l'utilisateur comme effacé conformément au GDPR et désactive le compte. La suppression est permanente et ne peut pas être annulée. Il n'existe aucune option de restauration.",
+    erase_type_prompt: "Saisissez l'identifiant complet de l'utilisateur (%{mxid}) pour confirmer",
+    escalate_title: "Confirmer ces modifications",
+    escalate_deactivate: "Vous êtes sur le point de désactiver ce compte.",
+    escalate_admin: "Vous êtes sur le point d'accorder à cet utilisateur les privilèges d'administrateur du serveur.",
+  },
   action: {
     erase: "Effacer les données de l'utilisateur",
     erase_avatar: "Effacer l'avatar",

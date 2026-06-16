@@ -73,7 +73,6 @@ import {
   regex,
   required,
   ResourceContextProvider,
-  SaveButton,
   SelectInput,
   SimpleFormIterator,
   SimpleList,
@@ -102,6 +101,7 @@ import { MakeAdminBtn, RoomBulkActionButtons } from "../rooms";
 import AvatarField from "../../components/users/fields/AvatarField";
 import EditableAvatarField from "../../components/users/fields/EditableAvatarField";
 import DeleteUserButton from "../../components/users/buttons/DeleteUserButton";
+import DangerZoneSaveButton from "../../components/users/buttons/DangerZoneSaveButton";
 import { AllowCrossSigningButton } from "../../components/users/buttons/AllowCrossSigningButton";
 import DeviceCreateButton from "../../components/users/buttons/DeviceCreateButton";
 import { RenewAccountValidityButton } from "../../components/users/buttons/RenewAccountValidityButton";
@@ -806,7 +806,7 @@ const UserEditToolbar = () => {
     <>
       <div className={ToolbarClasses.defaultToolbar}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
-          <SaveButton />
+          <DangerZoneSaveButton />
           {record && record.id && (
             <UserPreventSelfDelete ownUserIsSelected={ownUserIsSelected} systemUserIsSelected={systemUserIsSelected}>
               <DeleteUserButton
