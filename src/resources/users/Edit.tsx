@@ -244,25 +244,27 @@ const MASSessionsPanel = () => {
   const [newToken, setNewToken] = useState<string | null>(null);
   const [form, setForm] = useState({ scope: "", human_name: "", expires_in: "" });
 
+  // Each session list fetches only when its tab is active; react-query caches so
+  // switching back is instant. Avoids four unconditional round-trips on mount.
   const { data: personalSessions = [], isLoading: loadingPersonal } = useGetList(
     "mas_personal_sessions",
     { filter: { user_id: masId }, pagination: { page: 1, perPage: 50 }, sort: { field: "created_at", order: "DESC" } },
-    { enabled: !!masId }
+    { enabled: !!masId && tab === 0 }
   );
   const { data: userSessions = [], isLoading: loadingUser } = useGetList(
     "mas_user_sessions",
     { filter: { user_id: masId }, pagination: { page: 1, perPage: 50 }, sort: { field: "created_at", order: "DESC" } },
-    { enabled: !!masId }
+    { enabled: !!masId && tab === 1 }
   );
   const { data: oauth2Sessions = [], isLoading: loadingOAuth2 } = useGetList(
     "mas_oauth2_sessions",
     { filter: { user_id: masId }, pagination: { page: 1, perPage: 50 }, sort: { field: "created_at", order: "DESC" } },
-    { enabled: !!masId }
+    { enabled: !!masId && tab === 2 }
   );
   const { data: compatSessions = [], isLoading: loadingCompat } = useGetList(
     "mas_compat_sessions",
     { filter: { user_id: masId }, pagination: { page: 1, perPage: 50 }, sort: { field: "created_at", order: "DESC" } },
-    { enabled: !!masId }
+    { enabled: !!masId && tab === 3 }
   );
 
   // Build list contexts at top level (hooks must not be called conditionally)
@@ -1023,6 +1025,7 @@ export const UserEdit = (props: EditProps) => {
       title={<UserTitle />}
       actions={<UserEditActions />}
       mutationMode="pessimistic"
+      redirect="edit"
       queryOptions={{
         meta: {
           include: ["features"], // Tell your dataProvider to include features
