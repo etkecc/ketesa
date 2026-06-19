@@ -1,6 +1,6 @@
 # etke.cc-specific components
 
-This directory holds the features built specifically for the [etke.cc](https://etke.cc) platform. They wire Ketesa into etke.cc's managed-hosting backend, so they only run on etke.cc-hosted servers and are documented here rather than in the [main docs](../../../docs/README.md). They are not part of the open-source Ketesa project: no issues, PRs, or support requests for them.
+These features only light up when Ketesa runs on an [etke.cc](https://etke.cc)-hosted server: they turn the admin panel into the control surface for the managed platform behind it. They talk to etke.cc's hosting backend, so on a self-hosted install they simply do nothing, and they live here instead of the [main docs](../../../docs/README.md) because they are not part of the open-source Ketesa project. No issues, PRs, or support requests for them.
 
 ## Components
 
@@ -84,9 +84,9 @@ The **Contact support** sidebar item opens a full ticketing interface inside Ket
 
 ### Instance config
 
-White-labels Ketesa and tailors its feature set per deployment, all from platform configuration with no rebuild or redeploy. Ketesa fetches the config from the etke.cc API when it loads.
+Per deployment, etke.cc's config controls two things about Ketesa, with no rebuild or redeploy (Ketesa pulls the settings from the API as it loads): how it looks, and what it shows.
 
-White-labeling covers the surface details:
+First, the skin. Swap the name, logo, favicon, and login background so the panel wears your brand instead of Ketesa's:
 
 | Setting | What it changes |
 |---------|-----------------|
@@ -95,7 +95,7 @@ White-labeling covers the surface details:
 | Favicon | Browser tab icon |
 | Background image | Full-page background on the login screen |
 
-Feature toggles hide sections that don't apply to a given deployment:
+Second, what a given deployment even shows. Switch off the pages it has no use for and they leave both the UI and the sidebar:
 
 | Feature | What it hides |
 |---------|---------------|
@@ -107,4 +107,4 @@ Feature toggles hide sections that don't apply to a given deployment:
 | Federation | The Federation overview page |
 | Invite tokens | The Registration tokens page |
 
-etke.cc's branding can be removed entirely on the appropriate plan: the footer (links to Ketesa's repo, etke.cc, and the Matrix room) along with the "powered by etke.cc" notes and help-page links shown across the feature pages. Contact support to enable it.
+On the right plan, etke.cc's own branding comes off entirely: the footer (links to Ketesa's repo, etke.cc, and the Matrix room) and the "powered by etke.cc" notes and help-page links across the feature pages. Contact support to switch it on.

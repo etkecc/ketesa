@@ -48,19 +48,20 @@ Questions? Come say hi in the [community room](https://matrix.to/#/#ketesa:etke.
 
 ### User management
 
-Everything you'd do to an account lives on one page. Suspend someone, [shadow-ban](./docs/user-management.md#-shadow-ban) them,
-[deactivate or erase](./docs/user-management.md#-deactivation-vs-erasure) the account outright. Set [rate limits](./docs/user-management.md#-rate-limits),
-flip on [experimental features](./docs/user-management.md#-experimental-features), dig into [account data](./docs/user-management.md#-account-data).
-Third-party IDs, devices (create, rename, delete), room memberships, and cross-signing keys are all
-right there too. Got a whole batch to onboard? Hand [CSV import](./docs/csv-import.md) a file and it
-registers everyone at once, third-party IDs and all. Passwords generate on demand or you set them by hand,
-and every avatar wears a [role badge](./docs/user-badges.md) (admin, bot, support, federated, system-managed)
-so you know what you're dealing with before you click in.
+Everything you'd do to an account lives on one page. The blunt end first: suspend someone,
+[shadow-ban](./docs/user-management.md#-shadow-ban) them, or [deactivate or erase](./docs/user-management.md#-deactivation-vs-erasure)
+the account outright. Past that, the dials: [rate limits](./docs/user-management.md#-rate-limits), [experimental features](./docs/user-management.md#-experimental-features),
+the raw [account data](./docs/user-management.md#-account-data). And the plumbing underneath, same page: third-party IDs,
+devices (create, rename, delete), room memberships, cross-signing keys.
+Passwords generate on demand or you set them by hand, and every avatar carries a [role badge](./docs/user-badges.md)
+(admin, bot, support, federated, system-managed) so you know what you're dealing with before you click in.
+
+Onboarding a crowd? Hand [CSV import](./docs/csv-import.md) a file and it registers everyone at once, third-party IDs and all.
 
 Running [Matrix Authentication Service (MAS)](https://github.com/element-hq/matrix-authentication-service)?
-Ketesa grows a whole [MAS-native side](./docs/user-management.md#-mas-user-management): browse and revoke
+Ketesa grows a whole [MAS-native side](./docs/user-management.md#-mas-user-management). Browse and revoke
 active sessions (compat, OAuth2, personal), manage linked email addresses, check upstream OAuth provider
-links, and create users straight through MAS.
+links, or create users straight through MAS.
 
 [User management guide](./docs/user-management.md)
 
@@ -111,8 +112,9 @@ act on without leaving the page.
 ### Ten languages
 
 Ketesa is fully translated into ten languages: English, German, French, Japanese, Russian, Persian,
-Ukrainian, Chinese, Italian, and Portuguese. Fully meaning fully, every string, with no half-translated
-screens or stray English left sitting in the other locales.
+Ukrainian, Chinese, Italian, and Portuguese. Fully meaning fully: every string, with no half-translated
+screens or stray English sitting in the other locales. Your non-English-speaking admins aren't hunting
+through a half-localized menu at 2am for the button that quarantines a room.
 
 ### Mobile support
 
