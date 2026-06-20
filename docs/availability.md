@@ -54,7 +54,8 @@ To get the latest unreleased changes:
 | Channel | Type | Maintainer | Best for | Notes |
 |---|---|---|---|---|
 | [IPFS](#ipfs) | Mirror / alternative delivery | [Fеnикs (@fenuks:sibnsk.net)](https://matrix.to/#/@fenuks:sibnsk.net) | Content-addressed distribution | See the [IPFS](#ipfs) section below for addresses |
-| [Arch Linux AUR](https://aur.archlinux.org/packages/synapse-admin-etke-git) | AUR package | [@drygdryg](https://github.com/drygdryg) | Arch users who prefer AUR packaging | Legacy package naming; maintained outside this repository |
+| [ketesa](https://aur.archlinux.org/packages/ketesa) | Arch Linux AUR | [@Marcool04](https://github.com/Marcool04) | Arch users who prefer AUR packaging | maintained outside this repository |
+| [ketesa-git](https://aur.archlinux.org/packages/ketesa-git) | Arch Linux AUR | [@drygdryg](https://github.com/drygdryg) | Arch users who prefer AUR packaging | maintained outside this repository |
 
 ## IPFS
 
