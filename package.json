@@ -84,7 +84,7 @@
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.79.0",
     "react-is": "^19.2.7",
-    "react-router": "^7.17.0",
+    "react-router": "^7.18.0",
     "react-router-dom": "^7.17.0"
   },
   "scripts": {
