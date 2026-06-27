@@ -15,7 +15,7 @@ Ketesa is open source ([Apache-2.0](https://github.com/etkecc/ketesa/blob/main/L
 | Channel | Type | Maintainer | Best for | Notes |
 |---|---|---|---|---|
 | [etke.cc](https://etke.cc/?utm_source=github&utm_medium=docs&utm_campaign=ketesa) | Managed hosting | Official | Fully managed deployments | Ketesa is [a core component](https://etke.cc/help/faq#what-are-the-base-matrix-components-installed-on-the-server) installed by default |
-| [admin.etke.cc](https://admin.etke.cc) | Hosted instance | Official | No installation needed | Always on the latest development version |
+| [cloud.ketesa.app](https://cloud.ketesa.app) | Hosted instance | Official | No installation needed | Always on the latest development version |
 | [GitHub Releases](https://github.com/etkecc/ketesa/releases) | Static builds | Official | Self-hosting behind any web server | Includes `ketesa.tar.gz` and `ketesa-subpath-admin.tar.gz` |
 | [GHCR](https://github.com/etkecc/ketesa/pkgs/container/ketesa) | Container image | Official | Docker and OCI-based deployments | Main image registry |
 | [Docker Hub](https://hub.docker.com/r/etkecc/ketesa/tags) | Container image | Official | Docker-first users | Mirrors the official container images |
@@ -37,7 +37,7 @@ or pass the `BASE_PATH` Docker build argument.
 
 To get the latest unreleased changes:
 
-- Use [admin.etke.cc](https://admin.etke.cc) for the hosted development version
+- Use [cloud.ketesa.app](https://cloud.ketesa.app) for the hosted development version
 - Pull `latest` or `latest-subpath-admin` from [GHCR](https://github.com/etkecc/ketesa/pkgs/container/ketesa) or [Docker Hub](https://hub.docker.com/r/etkecc/ketesa/tags)
 - Download `dist-root` or `dist-subpath-admin` from the latest successful [GitHub Actions run](https://github.com/etkecc/ketesa/actions/workflows/workflow.yml)
 - Build the `main` branch from [source](https://github.com/etkecc/ketesa)

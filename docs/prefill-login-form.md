@@ -2,7 +2,7 @@
 
 Ketesa's login form can take starting values from the URL's query string, so you can bookmark your setup or send someone a link that lands them on the right homeserver.
 
-Two parameters work anywhere. `username` fills the username field, and `server` fills the homeserver URL field (a bare hostname gets a default protocol added if you leave one off). So `https://admin.etke.cc?username=admin&server=https://matrix.example.com` opens the credentials form with both fields ready.
+Two parameters work anywhere. `username` fills the username field, and `server` fills the homeserver URL field (a bare hostname gets a default protocol added if you leave one off). So `https://cloud.ketesa.app?username=admin&server=https://matrix.example.com` opens the credentials form with both fields ready.
 
 ## Local development only
 

@@ -6,7 +6,7 @@ ARG BUILD_DATE
 
 LABEL org.opencontainers.image.title="Ketesa" \
       org.opencontainers.image.description="Admin UI for Matrix servers, formerly Synapse Admin" \
-      org.opencontainers.image.url="https://admin.etke.cc" \
+      org.opencontainers.image.url="https://ketesa.app" \
       org.opencontainers.image.documentation="https://github.com/etkecc/ketesa#readme" \
       org.opencontainers.image.source="https://github.com/etkecc/ketesa" \
       org.opencontainers.image.vendor="etke.cc" \

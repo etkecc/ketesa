@@ -34,7 +34,7 @@ no config changes, so take your pick:
 
 | Method | How |
 |---|---|
-| Hosted (CDN) | Open [admin.etke.cc](https://admin.etke.cc) and point it at your homeserver, nothing to install |
+| Hosted (CDN) | Open [cloud.ketesa.app](https://cloud.ketesa.app) and point it at your homeserver, nothing to install |
 | Docker | Swap your image tag to `ghcr.io/etkecc/ketesa:latest` |
 | Static files | Drop the Ketesa release tarball where your current dist directory lives |
 
@@ -151,7 +151,7 @@ light up when there's an etke.cc platform behind them to talk to:
 | Where | Details |
 |---|---|
 | [etke.cc](https://etke.cc/?utm_source=github&utm_medium=readme&utm_campaign=ketesa) | Managed hosting with Ketesa built in |
-| [admin.etke.cc](https://admin.etke.cc) | Hosted instance, always on the latest development version |
+| [cloud.ketesa.app](https://cloud.ketesa.app) | Hosted instance, always on the latest development version |
 | [GitHub Releases](https://github.com/etkecc/ketesa/releases) | Official prebuilt tarballs for root-path and `/admin` deployments |
 | [GHCR](https://github.com/etkecc/ketesa/pkgs/container/ketesa) / [Docker Hub](https://hub.docker.com/r/etkecc/ketesa/tags) | Official container images |
 | [Source](https://github.com/etkecc/ketesa) | Build from source or track `main` directly |
@@ -271,7 +271,7 @@ See also: [Synapse administration endpoints](https://element-hq.github.io/synaps
 
 ### Use without installing anything
 
-The hosted build at [admin.etke.cc](https://admin.etke.cc) is always current and needs no installation.
+The hosted build at [cloud.ketesa.app](https://cloud.ketesa.app) is always current and needs no installation.
 Open it, type in your homeserver URL, and log in with your admin account. That's the whole setup.
 
 > Your browser must be able to reach `/_synapse/admin` on your homeserver. The endpoints
