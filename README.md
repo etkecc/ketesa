@@ -1,16 +1,21 @@
 <p align="center">
   <img alt="Ketesa Logo" src="./public/images/logo.webp" height="140" />
   <h3 align="center">
-    Ketesa<br>
-    <a href="https://matrix.to/#/#ketesa:etke.cc">
-      <img alt="Community room" src="https://img.shields.io/badge/room-community_room-green?logo=matrix&label=%23ketesa%3Aetke.cc">
-    </a><br>
-    <a href="./LICENSE">
-      <img alt="License" src="https://img.shields.io/github/license/etkecc/ketesa">
-    </a>
-    <a href="https://api.reuse.software/info/github.com/etkecc/ketesa">
-      <img alt="REUSE compliance" src="https://api.reuse.software/badge/github.com/etkecc/ketesa">
-    </a>
+    Ketesa
+    <p>
+      <a href="https://matrix.to/#/#ketesa:etke.cc">
+        <img alt="Community room" src="https://img.shields.io/badge/room-community_room-green?logo=matrix&label=%23ketesa%3Aetke.cc">
+      </a><br>
+      <a href="https://ketesa.app">
+        <img alt="Ketesa.app badge" src="https://img.shields.io/badge/Website-ketesa.app-green">
+      </a>
+      <a href="./LICENSE">
+        <img alt="License" src="https://img.shields.io/github/license/etkecc/ketesa">
+      </a>
+      <a href="https://api.reuse.software/info/github.com/etkecc/ketesa">
+        <img alt="REUSE compliance" src="https://api.reuse.software/badge/github.com/etkecc/ketesa">
+      </a>
+    </p>
   </h3>
   <p align="center"><strong>The evolution of Synapse Admin. Manage users, rooms, media, and federation across your Matrix homeserver from one web interface. Formerly Synapse Admin.</strong></p>
 </p>
