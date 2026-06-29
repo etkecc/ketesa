@@ -19,6 +19,7 @@ import {
   CreateButton,
   DateField,
   ExportButton,
+  FilterButton,
   ListProps,
   NullableBooleanInput,
   Pagination,
@@ -47,10 +48,19 @@ import { isSystemUser, getLocalpart } from "../../utils/mxid";
 import { isMAS } from "../../providers/data/mas";
 import { Datagrid, EmptyState, List } from "../../components/layout";
 
+// Security boundary: external-auth deployments must keep guests hidden (the guests input
+// is also hidden in that mode). MAS forces guests=false at the provider, so it needs
+// nothing here. Exported for direct unit coverage; collapsing this to {} exposes guest accounts.
+export const userFilterDefaults = (): Record<string, unknown> => {
+  if (isMAS()) return {};
+  return GetConfig().externalAuthProvider ? { guests: false } : {};
+};
+
 const UserListActions = () => {
   const { total } = useListContext();
   return (
     <TopToolbar>
+      <FilterButton />
       <FindUserButton />
       <CreateButton />
       {!!total && <ExportButton maxResults={10000} />}
@@ -136,7 +146,6 @@ const userFilters = () => {
       nullLabel="resources.users.fields.filter_user_all"
       falseLabel="resources.users.fields.filter_deactivated_false"
       trueLabel="resources.users.fields.filter_deactivated_true"
-      alwaysOn
     />,
     <NullableBooleanInput
       key="locked"
@@ -145,7 +154,6 @@ const userFilters = () => {
       nullLabel="resources.users.fields.filter_user_all"
       falseLabel="resources.users.fields.filter_locked_false"
       trueLabel="resources.users.fields.filter_locked_true"
-      alwaysOn
     />,
     // waiting for https://github.com/element-hq/synapse/issues/18016
     // <BooleanInput label="resources.users.fields.show_suspended" source="suspended" alwaysOn />,
@@ -162,12 +170,11 @@ const userFilters = () => {
         nullLabel="resources.users.fields.filter_user_all"
         falseLabel="resources.users.fields.filter_guests_false"
         trueLabel="resources.users.fields.filter_guests_true"
-        alwaysOn
       />
     );
   }
   if (GetConfig().asManagedUsers?.length > 0) {
-    filters.push(<SystemUsersFilter key="system_users" source="system_users" alwaysOn />);
+    filters.push(<SystemUsersFilter key="system_users" source="system_users" />);
   }
   return filters;
 };
@@ -236,18 +243,12 @@ export const UserList = (props: ListProps) => {
     <List
       {...props}
       filters={userFilters()}
-      filterDefaultValues={isMAS() ? {} : { guests: false, locked: false, suspended: false }} // shadow_banned: no API yet
+      filterDefaultValues={userFilterDefaults()}
       sort={{ field: "name", order: "ASC" }}
       actions={<UserListActions />}
       pagination={<UserPagination />}
       perPage={50}
       empty={<EmptyState />}
-      sx={theme => ({
-        [theme.breakpoints.up("sm")]: {
-          "& .RaList-actions": { flexWrap: "nowrap" },
-          "& .RaList-actions form": { flexWrap: "nowrap", overflowX: "auto", minWidth: 0 },
-        },
-      })}
     >
       {isSmall ? (
         <SimpleList
