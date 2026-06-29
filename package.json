@@ -75,7 +75,7 @@
     "lodash": "^4.18.1",
     "oidc-client-ts": "^3.5.0",
     "papaparse": "^5.5.3",
-    "ra-core": "^5.14.7",
+    "ra-core": "^5.15.0",
     "ra-i18n-polyglot": "^5.14.7",
     "ra-language-english": "^5.14.7",
     "ra-language-french": "^5.14.7",
