@@ -7,6 +7,7 @@ const log = createLogger("matrix");
 import { Room, UploadMediaParams, UploadMediaResult } from "./types";
 
 import { GetInstanceConfig } from "../components/etke.cc/InstanceConfig";
+import { WellKnownKey, WellKnownKeyLegacy } from "../utils/config";
 import { generateDeviceId } from "../utils/password";
 import { encodeURLComponent } from "../utils/safety";
 
@@ -35,6 +36,14 @@ export const resolveBaseUrlWithWellKnown = async (baseUrl: string, signal?: Abor
   const wellKnownUrl = `${origin}/.well-known/matrix/client`;
   try {
     const response = await fetchUtils.fetchJson(wellKnownUrl, { method: "GET", signal });
+    // A homeserver can opt out of URL canonization via its own well-known config
+    // (cc.etke.ketesa.wellKnownDiscovery=false), e.g. when the admin endpoint lives
+    // on a domain the public well-known does not, and should not, advertise.
+    const wkConfig = response.json?.[WellKnownKey] || response.json?.[WellKnownKeyLegacy];
+    if (wkConfig?.wellKnownDiscovery === false) {
+      log.debug("well-known discovery disabled by homeserver, keeping provided URL", { original: baseUrl });
+      return cleaned;
+    }
     const wkBaseUrl = response.json?.["m.homeserver"]?.base_url;
     if (typeof wkBaseUrl === "string" && wkBaseUrl.trim() !== "") {
       const resolved = wkBaseUrl.replace(/\/+$/g, "");
@@ -57,6 +66,11 @@ export const getWellKnownUrl = async (domain: string, signal?: AbortSignal) => {
   const wellKnownUrl = `https://${domain}/.well-known/matrix/client`;
   try {
     const response = await fetchUtils.fetchJson(wellKnownUrl, { method: "GET", signal });
+    // Honor the homeserver's opt-out from URL canonization (see resolveBaseUrlWithWellKnown).
+    const wkConfig = response.json?.[WellKnownKey] || response.json?.[WellKnownKeyLegacy];
+    if (wkConfig?.wellKnownDiscovery === false) {
+      return `https://${domain}`;
+    }
     return response.json["m.homeserver"].base_url;
   } catch {
     // if there is no .well-known entry, return the domain itself

@@ -1,7 +1,14 @@
 import { Mock } from "vitest";
 import { fetchUtils } from "react-admin";
 
-import { isValidBaseUrl, splitMxid, resolveBaseUrlWithWellKnown, getAuthMetadata, uploadMedia } from "./matrix";
+import {
+  isValidBaseUrl,
+  splitMxid,
+  resolveBaseUrlWithWellKnown,
+  getWellKnownUrl,
+  getAuthMetadata,
+  uploadMedia,
+} from "./matrix";
 import { jsonClient } from "./http";
 
 vi.mock("react-admin", () => ({
@@ -99,6 +106,129 @@ describe("resolveBaseUrlWithWellKnown", () => {
     fetchJsonMock.mockRejectedValueOnce(new Error("nope"));
 
     await expect(resolveBaseUrlWithWellKnown("https://example.com/")).resolves.toBe("https://example.com");
+  });
+
+  it("keeps the provided URL when the homeserver opts out via cc.etke.ketesa", async () => {
+    fetchJsonMock.mockResolvedValueOnce({
+      json: {
+        "m.homeserver": { base_url: "https://api.example.com" },
+        "cc.etke.ketesa": { wellKnownDiscovery: false },
+      },
+    });
+
+    await expect(resolveBaseUrlWithWellKnown("https://example.com")).resolves.toBe("https://example.com");
+  });
+
+  it("keeps the provided URL when opted out via the legacy cc.etke.synapse-admin key", async () => {
+    fetchJsonMock.mockResolvedValueOnce({
+      json: {
+        "m.homeserver": { base_url: "https://api.example.com" },
+        "cc.etke.synapse-admin": { wellKnownDiscovery: false },
+      },
+    });
+
+    await expect(resolveBaseUrlWithWellKnown("https://example.com")).resolves.toBe("https://example.com");
+  });
+
+  it("still canonizes when wellKnownDiscovery is not false", async () => {
+    fetchJsonMock.mockResolvedValueOnce({
+      json: {
+        "m.homeserver": { base_url: "https://api.example.com" },
+        "cc.etke.ketesa": { wellKnownDiscovery: true },
+      },
+    });
+
+    await expect(resolveBaseUrlWithWellKnown("https://example.com")).resolves.toBe("https://api.example.com");
+  });
+
+  it("opts out only on a strict boolean false, not a truthy string", async () => {
+    fetchJsonMock.mockResolvedValueOnce({
+      json: {
+        "m.homeserver": { base_url: "https://api.example.com" },
+        "cc.etke.ketesa": { wellKnownDiscovery: "false" },
+      },
+    });
+
+    await expect(resolveBaseUrlWithWellKnown("https://example.com")).resolves.toBe("https://api.example.com");
+  });
+
+  it("prefers cc.etke.ketesa over the legacy key when both are present", async () => {
+    fetchJsonMock.mockResolvedValueOnce({
+      json: {
+        "m.homeserver": { base_url: "https://api.example.com" },
+        "cc.etke.ketesa": { wellKnownDiscovery: false },
+        "cc.etke.synapse-admin": { wellKnownDiscovery: true },
+      },
+    });
+
+    await expect(resolveBaseUrlWithWellKnown("https://example.com")).resolves.toBe("https://example.com");
+  });
+
+  it("preserves an http:// URL with port when the homeserver opts out (VPN / local IP)", async () => {
+    fetchJsonMock.mockResolvedValueOnce({
+      json: {
+        "m.homeserver": { base_url: "https://matrix.example.com" },
+        "cc.etke.ketesa": { wellKnownDiscovery: false },
+      },
+    });
+
+    await expect(resolveBaseUrlWithWellKnown("http://10.0.0.5:8008")).resolves.toBe("http://10.0.0.5:8008");
+  });
+
+  it("falls back to the provided URL when the well-known has no m.homeserver", async () => {
+    fetchJsonMock.mockResolvedValueOnce({ json: {} });
+
+    await expect(resolveBaseUrlWithWellKnown("https://example.com")).resolves.toBe("https://example.com");
+  });
+});
+
+describe("getWellKnownUrl", () => {
+  const fetchJsonMock = fetchUtils.fetchJson as Mock;
+
+  afterEach(() => {
+    fetchJsonMock.mockReset();
+  });
+
+  it("returns the well-known base_url by default", async () => {
+    fetchJsonMock.mockResolvedValueOnce({
+      json: { "m.homeserver": { base_url: "https://api.example.com" } },
+    });
+
+    await expect(getWellKnownUrl("example.com")).resolves.toBe("https://api.example.com");
+  });
+
+  it("returns https://<domain> when the homeserver opts out via cc.etke.ketesa", async () => {
+    fetchJsonMock.mockResolvedValueOnce({
+      json: {
+        "m.homeserver": { base_url: "https://api.example.com" },
+        "cc.etke.ketesa": { wellKnownDiscovery: false },
+      },
+    });
+
+    await expect(getWellKnownUrl("example.com")).resolves.toBe("https://example.com");
+  });
+
+  it("honors the legacy cc.etke.synapse-admin opt-out key", async () => {
+    fetchJsonMock.mockResolvedValueOnce({
+      json: {
+        "m.homeserver": { base_url: "https://api.example.com" },
+        "cc.etke.synapse-admin": { wellKnownDiscovery: false },
+      },
+    });
+
+    await expect(getWellKnownUrl("example.com")).resolves.toBe("https://example.com");
+  });
+
+  it("falls back to https://<domain> when well-known is absent", async () => {
+    fetchJsonMock.mockRejectedValueOnce(new Error("404"));
+
+    await expect(getWellKnownUrl("example.com")).resolves.toBe("https://example.com");
+  });
+
+  it("falls back to https://<domain> when the well-known has no m.homeserver", async () => {
+    fetchJsonMock.mockResolvedValueOnce({ json: {} });
+
+    await expect(getWellKnownUrl("example.com")).resolves.toBe("https://example.com");
   });
 });
 
