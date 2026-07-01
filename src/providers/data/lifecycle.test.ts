@@ -140,6 +140,59 @@ describe("lifecycle.beforeUpdate: MAS mode, with mas_id (regression guard)", () 
     expect(base.suspendUser).toHaveBeenCalledWith("@alice:hs", true);
     expect(base.shadowBanUser).toHaveBeenCalledWith("@alice:hs", true);
   });
+
+  const synapsePutBodies = () =>
+    vi
+      .mocked(jsonClient)
+      .mock.calls.filter(
+        ([url, opts]: any) => opts?.method === "PUT" && String(url).includes("/_synapse/admin/v2/users/")
+      )
+      .map(([, opts]: any) => JSON.parse(opts.body));
+
+  it("PUTs user_type to Synapse v2 when it is the only changed profile field", async () => {
+    const base = makeBase();
+    const wrap = wrapWithLifecycle(base as any);
+
+    await wrap.update("users", {
+      id: "@alice:hs",
+      previousData: { id: "@alice:hs", mas_id: "01HABCDEFULID", displayname: "Alice", user_type: null },
+      data: { id: "@alice:hs", displayname: "Alice", user_type: "support" },
+    });
+
+    const bodies = synapsePutBodies();
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0]).toEqual({ user_type: "support" });
+  });
+
+  it("includes user_type in the profile PUT alongside a displayname change", async () => {
+    const base = makeBase();
+    const wrap = wrapWithLifecycle(base as any);
+
+    await wrap.update("users", {
+      id: "@alice:hs",
+      previousData: { id: "@alice:hs", mas_id: "01HABCDEFULID", displayname: "Alice", user_type: null },
+      data: { id: "@alice:hs", displayname: "Alicia", user_type: "bot" },
+    });
+
+    const bodies = synapsePutBodies();
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0]).toEqual({ displayname: "Alicia", user_type: "bot" });
+  });
+
+  it("sends null user_type to Synapse v2 when the field is cleared", async () => {
+    const base = makeBase();
+    const wrap = wrapWithLifecycle(base as any);
+
+    await wrap.update("users", {
+      id: "@alice:hs",
+      previousData: { id: "@alice:hs", mas_id: "01HABCDEFULID", displayname: "Alice", user_type: "bot" },
+      data: { id: "@alice:hs", displayname: "Alice", user_type: null },
+    });
+
+    const bodies = synapsePutBodies();
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0]).toEqual({ user_type: null });
+  });
 });
 
 describe("getMASUsersAsMainResource.update", () => {

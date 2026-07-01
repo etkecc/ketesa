@@ -87,7 +87,10 @@ export const wrapWithLifecycle = (base: SynapseDataProvider): SynapseDataProvide
           }
 
           // Synapse-managed profile fields sent via main PUT /_synapse/admin/v2/users/...
-          const synapseProfileChanged = prev.displayname !== next.displayname || prev.avatar_src !== next.avatar_src;
+          const synapseProfileChanged =
+            prev.displayname !== next.displayname ||
+            prev.avatar_src !== next.avatar_src ||
+            prev.user_type !== next.user_type;
           if (synapseProfileChanged) {
             const baseUrl = localStorage.getItem("base_url") || "";
             const matrixId = encodeURIComponent(String(params.id));
@@ -95,6 +98,7 @@ export const wrapWithLifecycle = (base: SynapseDataProvider): SynapseDataProvide
             const body: Record<string, any> = {};
             if (prev.displayname !== next.displayname) body.displayname = next.displayname ?? "";
             if (prev.avatar_src !== next.avatar_src) body.avatar_url = next.avatar_src ?? "";
+            if (prev.user_type !== next.user_type) body.user_type = next.user_type ?? null;
             await jsonClient(`${baseUrl}/_synapse/admin/v2/users/${matrixId}`, {
               method: "PUT",
               body: JSON.stringify(body),
