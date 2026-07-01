@@ -9,6 +9,7 @@ let submitData: Record<string, any> = {};
 const createMock = vi.fn();
 const masSetAdminMock = vi.fn();
 const masSetPasswordMock = vi.fn();
+const jsonClientMock = vi.fn();
 const notifyMock = vi.fn();
 const redirectMock = vi.fn();
 
@@ -40,6 +41,10 @@ vi.mock("react-admin", () => ({
 
 vi.mock("../../providers/data/mas", () => ({
   isMAS: () => true,
+}));
+
+vi.mock("../../providers/http", () => ({
+  jsonClient: (...args: any[]) => jsonClientMock(...args),
 }));
 
 vi.mock("../../components/hooks/useDocTitle", () => ({
@@ -75,7 +80,13 @@ beforeEach(() => {
   createMock.mockResolvedValue({ id: "@alice:hs", mas_id: MAS_ID });
   masSetAdminMock.mockResolvedValue({ success: true });
   masSetPasswordMock.mockResolvedValue({ success: true });
+  jsonClientMock.mockResolvedValue({ json: {} });
 });
+
+const synapseAdminPut = () =>
+  jsonClientMock.mock.calls.find(
+    ([url, opts]: any) => opts?.method === "PUT" && String(url).includes("/_synapse/admin/v2/users/")
+  );
 
 describe("MASUserCreate: post-creation failure surfacing", () => {
   it("set-password failure surfaces the server error and suppresses the success notification", async () => {
@@ -122,6 +133,34 @@ describe("MASUserCreate: post-creation failure surfacing", () => {
     expect(masSetPasswordMock).toHaveBeenCalledWith(MAS_ID, "Str0ng-Passw0rd!");
     expect(notifyMock).toHaveBeenCalledWith("ra.notification.created", { messageArgs: { smart_count: 1 } });
     expect(notifyMock).not.toHaveBeenCalledWith(expect.anything(), { type: "error" });
+  });
+
+  it("admin: writes to both MAS set-admin and the Synapse v2 homeserver-admin flag", async () => {
+    await submit({ username: "alice", admin: true });
+
+    expect(masSetAdminMock).toHaveBeenCalledWith(MAS_ID, true);
+    const put = synapseAdminPut()!;
+    expect(put).toBeDefined();
+    expect(String(put[0])).toContain("/_synapse/admin/v2/users/%40alice%3Ahs");
+    expect(JSON.parse(put[1].body)).toEqual({ admin: true });
+  });
+
+  it("admin: no Synapse v2 PUT when admin is not requested", async () => {
+    await submit({ username: "alice" });
+
+    expect(masSetAdminMock).not.toHaveBeenCalled();
+    expect(synapseAdminPut()).toBeUndefined();
+  });
+
+  it("Synapse admin PUT failure surfaces the error and skips the MAS grant (no crown-less live grant)", async () => {
+    jsonClientMock.mockRejectedValue(new Error("synapse down"));
+
+    await submit({ username: "alice", admin: true });
+
+    // MAS scope is NOT granted when the Synapse flag write fails: no hidden-privileged account.
+    expect(masSetAdminMock).not.toHaveBeenCalled();
+    expect(notifyMock).toHaveBeenCalledWith("resources.users.action.set_admin_failure", { type: "error" });
+    expect(notifyMock).not.toHaveBeenCalledWith("ra.notification.created", expect.anything());
   });
 
   it("both admin and password fail: both messages are surfaced together", async () => {

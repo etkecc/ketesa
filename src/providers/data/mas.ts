@@ -165,6 +165,9 @@ export const getMASUsersAsMainResource = () => ({
   // enrichList fetches Synapse user data for each MAS record in cursor-mode (default name ASC sort).
   // It must include ALL fields that getList (Synapse-first mode) populates from Synapse,
   // so both modes expose a unified record shape to the UI.
+  // Note: this path (reverse-search / system-user scans) sources `admin` from Synapse only; it does
+  // not OR in MAS can_request_admin the way getList/getOne do, so a MAS-promoted admin shows no crown
+  // in these secondary views. Synapse-only-by-design here to avoid a per-record MAS fetch in the scan.
   enrichList: async (records: RaRecord[]) => {
     const synapseBaseUrl = localStorage.getItem("base_url") || "";
     return Promise.all(
@@ -278,7 +281,10 @@ export const getMASUsersAsMainResource = () => ({
             name: mxid,
             mas_id: masUser.id,
             username,
-            admin: masBase.admin,
+            // Crown shows if flagged admin on either surface: Synapse homeserver-admin OR MAS
+            // can_request_admin. The two diverge by how the admin was provisioned (Synapse-level or
+            // via MAS set-admin), and under MSC3861 the MAS flag is the one that grants real access.
+            admin: !!u.admin || !!masBase.admin,
             deactivated: masBase.deactivated,
             locked: !!masUser.attributes.locked_at,
             created_at: masBase.created_at,
@@ -370,6 +376,8 @@ export const getMASUsersAsMainResource = () => ({
       const { json: synapseJson } = await jsonClient(`${synapseBaseUrl}/_synapse/admin/v2/users/${matrixId}`);
       return {
         ...masRecord,
+        // Crown shows if flagged admin on either surface (Synapse homeserver-admin OR MAS can_request_admin).
+        admin: !!synapseJson.admin || !!masRecord.admin,
         avatar_src: synapseJson.avatar_url ?? null,
         displayname: synapseJson.displayname ?? null,
         user_type: synapseJson.user_type ?? null,
@@ -418,6 +426,8 @@ export const getMASUsersAsMainResource = () => ({
         );
         return {
           ...masRecord,
+          // Crown shows if flagged admin on either surface (Synapse homeserver-admin OR MAS can_request_admin).
+          admin: !!synapseJson.admin || !!masRecord.admin,
           avatar_src: synapseJson.avatar_url ?? null,
           displayname: synapseJson.displayname ?? null,
           user_type: synapseJson.user_type ?? null,

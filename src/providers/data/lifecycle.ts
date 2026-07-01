@@ -52,8 +52,10 @@ export const wrapWithLifecycle = (base: SynapseDataProvider): SynapseDataProvide
           // Also normalise to strict booleans to guard against undefined/null from incomplete cache data.
           const prevAdmin = prev.admin === true;
           const nextAdmin = next.admin === true;
-          if (next.admin !== undefined && prevAdmin !== nextAdmin)
-            await (dataProvider as SynapseDataProvider).masSetAdmin(masId, nextAdmin);
+          // Admin is written to both surfaces. The Synapse homeserver-admin flag (the badge source)
+          // goes in the profile PUT below; MAS set-admin (the login scope grant) runs only after that
+          // PUT succeeds, so a failed Synapse write never leaves a crown-less user with a live MAS grant.
+          const adminChanged = next.admin !== undefined && prevAdmin !== nextAdmin;
 
           const prevLocked = prev.locked === true;
           const nextLocked = next.locked === true;
@@ -90,7 +92,8 @@ export const wrapWithLifecycle = (base: SynapseDataProvider): SynapseDataProvide
           const synapseProfileChanged =
             prev.displayname !== next.displayname ||
             prev.avatar_src !== next.avatar_src ||
-            prev.user_type !== next.user_type;
+            prev.user_type !== next.user_type ||
+            adminChanged;
           if (synapseProfileChanged) {
             const baseUrl = localStorage.getItem("base_url") || "";
             const matrixId = encodeURIComponent(String(params.id));
@@ -99,11 +102,16 @@ export const wrapWithLifecycle = (base: SynapseDataProvider): SynapseDataProvide
             if (prev.displayname !== next.displayname) body.displayname = next.displayname ?? "";
             if (prev.avatar_src !== next.avatar_src) body.avatar_url = next.avatar_src ?? "";
             if (prev.user_type !== next.user_type) body.user_type = next.user_type ?? null;
+            if (adminChanged) body.admin = nextAdmin;
             await jsonClient(`${baseUrl}/_synapse/admin/v2/users/${matrixId}`, {
               method: "PUT",
               body: JSON.stringify(body),
             });
           }
+
+          // Grant the MAS admin scope only after the Synapse flag is persisted: a failed profile PUT
+          // rejects the save before this line, so MAS is never granted behind a crown-less UI.
+          if (adminChanged) await (dataProvider as SynapseDataProvider).masSetAdmin(masId, nextAdmin);
 
           return params;
         }

@@ -122,6 +122,69 @@ describe("lifecycle.beforeUpdate: MAS mode, with mas_id (regression guard)", () 
     expect(base.masDeactivateUser).toHaveBeenCalledWith("01HABCDEFULID", false);
   });
 
+  it("admin toggle writes to BOTH MAS set-admin and the Synapse v2 homeserver-admin flag", async () => {
+    const base = makeBase();
+    const wrap = wrapWithLifecycle(base as any);
+
+    const puts: { url: string; body: any }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: any) => {
+      if (opts?.method === "PUT") puts.push({ url, body: JSON.parse(opts.body) });
+      return { json: {} } as any;
+    });
+
+    await wrap.update("users", {
+      id: "@alice:hs",
+      previousData: { id: "@alice:hs", mas_id: "01HABCDEFULID", admin: false },
+      data: { id: "@alice:hs", admin: true },
+    });
+
+    // MAS grants the admin scope on login...
+    expect(base.masSetAdmin).toHaveBeenCalledWith("01HABCDEFULID", true);
+    // ...and Synapse gets the homeserver-admin flag the badge reads.
+    const synapsePut = puts.find(p => p.url.includes("/_synapse/admin/v2/users/"));
+    expect(synapsePut?.body).toEqual({ admin: true });
+  });
+
+  it("does not write admin to either surface when admin is unchanged", async () => {
+    const base = makeBase();
+    const wrap = wrapWithLifecycle(base as any);
+
+    const puts: { url: string; body: any }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: any) => {
+      if (opts?.method === "PUT") puts.push({ url, body: JSON.parse(opts.body) });
+      return { json: {} } as any;
+    });
+
+    await wrap.update("users", {
+      id: "@alice:hs",
+      previousData: { id: "@alice:hs", mas_id: "01HABCDEFULID", admin: true, displayname: "A" },
+      data: { id: "@alice:hs", admin: true, displayname: "B" },
+    });
+
+    expect(base.masSetAdmin).not.toHaveBeenCalled();
+    expect(puts.some(p => "admin" in p.body)).toBe(false);
+  });
+
+  it("admin omitted (disabled self-edit input) writes admin to neither surface", async () => {
+    const base = makeBase();
+    const wrap = wrapWithLifecycle(base as any);
+
+    const puts: { url: string; body: any }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: any) => {
+      if (opts?.method === "PUT") puts.push({ url, body: JSON.parse(opts.body) });
+      return { json: {} } as any;
+    });
+
+    await wrap.update("users", {
+      id: "@alice:hs",
+      previousData: { id: "@alice:hs", mas_id: "01HABCDEFULID", admin: true },
+      data: { id: "@alice:hs" },
+    });
+
+    expect(base.masSetAdmin).not.toHaveBeenCalled();
+    expect(puts.some(p => "admin" in p.body)).toBe(false);
+  });
+
   it("also dispatches suspend/shadowBan inside the MAS branch when those fields change", async () => {
     const base = makeBase();
     const wrap = wrapWithLifecycle(base as any);
@@ -192,6 +255,114 @@ describe("lifecycle.beforeUpdate: MAS mode, with mas_id (regression guard)", () 
     const bodies = synapsePutBodies();
     expect(bodies).toHaveLength(1);
     expect(bodies[0]).toEqual({ user_type: null });
+  });
+});
+
+describe("getMASUsersAsMainResource read-merge: admin shown if flagged on either surface (OR)", () => {
+  it("getList: Synapse-provisioned admin (Synapse=true, MAS can_request_admin=false) shows the crown", async () => {
+    vi.mocked(jsonClient).mockImplementation(async (url: string) => {
+      if (url.includes("/_synapse/admin/v3/users")) {
+        return { json: { users: [{ name: "@alice:hs.example.com", admin: true }], total: 1 } } as any;
+      }
+      if (url.includes("/api/admin/v1/users?")) {
+        return { json: { data: [{ id: "01HABCDEFULID", attributes: { username: "alice", admin: false } }] } } as any;
+      }
+      return { json: {} } as any;
+    });
+
+    const res = getMASUsersAsMainResource();
+    const result = await res.getList({
+      pagination: { page: 1, perPage: 10 },
+      sort: { field: "name", order: "ASC" },
+      filter: {},
+    });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].mas_id).toBe("01HABCDEFULID");
+    expect(result.data[0].admin).toBe(true);
+  });
+
+  it("getList: MAS-provisioned admin (Synapse=false, MAS can_request_admin=true) shows the crown", async () => {
+    vi.mocked(jsonClient).mockImplementation(async (url: string) => {
+      if (url.includes("/_synapse/admin/v3/users")) {
+        return { json: { users: [{ name: "@alice:hs.example.com", admin: false }], total: 1 } } as any;
+      }
+      if (url.includes("/api/admin/v1/users?")) {
+        return { json: { data: [{ id: "01HABCDEFULID", attributes: { username: "alice", admin: true } }] } } as any;
+      }
+      return { json: {} } as any;
+    });
+
+    const res = getMASUsersAsMainResource();
+    const result = await res.getList({
+      pagination: { page: 1, perPage: 10 },
+      sort: { field: "name", order: "ASC" },
+      filter: {},
+    });
+
+    // Regression guard: MAS-promoted admins (can_request_admin only, Synapse column false) kept the
+    // crown under the original code and must keep it — a Synapse-only read dropped it.
+    expect(result.data[0].admin).toBe(true);
+  });
+
+  it("getList: neither surface flags admin → no crown", async () => {
+    vi.mocked(jsonClient).mockImplementation(async (url: string) => {
+      if (url.includes("/_synapse/admin/v3/users")) {
+        return { json: { users: [{ name: "@bob:hs.example.com", admin: false }], total: 1 } } as any;
+      }
+      if (url.includes("/api/admin/v1/users?")) {
+        return { json: { data: [{ id: "01HBOBULID", attributes: { username: "bob", admin: false } }] } } as any;
+      }
+      return { json: {} } as any;
+    });
+
+    const res = getMASUsersAsMainResource();
+    const result = await res.getList({
+      pagination: { page: 1, perPage: 10 },
+      sort: { field: "name", order: "ASC" },
+      filter: {},
+    });
+
+    expect(result.data[0].admin).toBe(false);
+  });
+
+  it("getOne: MAS-provisioned admin (Synapse=false, MAS can_request_admin=true) shows the crown", async () => {
+    vi.mocked(jsonClient).mockImplementation(async (url: string) => {
+      if (url.includes("/api/admin/v1/users?")) {
+        return { json: { data: [{ id: "01HABCDEFULID", attributes: { username: "alice", admin: true } }] } } as any;
+      }
+      if (url.includes("/_synapse/admin/v2/users/")) {
+        return { json: { admin: false, displayname: "Alice" } } as any;
+      }
+      return { json: {} } as any;
+    });
+
+    const res = getMASUsersAsMainResource();
+    const record = await res.getOne({ id: "@alice:hs.example.com" });
+
+    expect(record.mas_id).toBe("01HABCDEFULID");
+    expect(record.admin).toBe(true);
+  });
+
+  it("update: the re-fetched record ORs Synapse and MAS admin", async () => {
+    vi.mocked(jsonClient).mockImplementation(async (url: string) => {
+      if (url.includes("/api/admin/v1/users/01HABCDEFULID")) {
+        return { json: { data: { id: "01HABCDEFULID", attributes: { username: "alice", admin: true } } } } as any;
+      }
+      if (url.includes("/_synapse/admin/v2/users/")) {
+        return { json: { admin: false, displayname: "Alice" } } as any;
+      }
+      return { json: {} } as any;
+    });
+
+    const res = getMASUsersAsMainResource();
+    const record = await res.update({
+      id: "@alice:hs.example.com",
+      previousData: { id: "@alice:hs.example.com", mas_id: "01HABCDEFULID" } as any,
+      data: { id: "@alice:hs.example.com" } as any,
+    });
+
+    expect((record as any).admin).toBe(true);
   });
 });
 

@@ -21,6 +21,7 @@ import {
 } from "react-admin";
 
 import { useDocTitle } from "../../components/hooks/useDocTitle";
+import { jsonClient } from "../../providers/http";
 import { User, UsernameAvailabilityResult } from "../../providers/types";
 import type { SynapseDataProvider } from "../../providers/types";
 import { isMAS } from "../../providers/data/mas";
@@ -55,11 +56,27 @@ const MASUserCreate = (props: CreateProps) => {
     const failures: string[] = [];
 
     if (masId && data.admin) {
+      // Synapse homeserver-admin (the flag the badge reads) is written first; MAS set-admin (the
+      // login scope grant) runs only if it succeeds, so a failed Synapse write can never leave a
+      // crown-less user who still holds a live MAS admin grant.
+      let synapseAdminOk = true;
       try {
-        const result = await dataProvider.masSetAdmin(masId, true);
-        if (!result.success) failures.push(result.error || translate("resources.users.action.set_admin_failure"));
+        const baseUrl = localStorage.getItem("base_url") || "";
+        await jsonClient(`${baseUrl}/_synapse/admin/v2/users/${encodeURIComponent(String(record.id))}`, {
+          method: "PUT",
+          body: JSON.stringify({ admin: true }),
+        });
       } catch {
+        synapseAdminOk = false;
         failures.push(translate("resources.users.action.set_admin_failure"));
+      }
+      if (synapseAdminOk) {
+        try {
+          const result = await dataProvider.masSetAdmin(masId, true);
+          if (!result.success) failures.push(result.error || translate("resources.users.action.set_admin_failure"));
+        } catch {
+          failures.push(translate("resources.users.action.set_admin_failure"));
+        }
       }
     }
 
