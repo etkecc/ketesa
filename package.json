@@ -66,7 +66,7 @@
     "@mui/icons-material": "^7.3.9",
     "@mui/material": "^7.3.9",
     "@mui/utils": "^7.3.9",
-    "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-query": "^5.103.1",
     "@tiptap/extension-placeholder": "^3.29.2",
     "@tiptap/react": "^3.29.2",
     "@tiptap/starter-kit": "^3.29.2",
@@ -87,7 +87,7 @@
     "react-router-dom": "^7.18.2"
   },
   "resolutions": {
-    "@tanstack/react-query": "^5.101.4",
+    "@tanstack/react-query": "^5.103.1",
     "@mui/material": "^7.3.9",
     "@mui/system": "^7.3.9",
     "@mui/icons-material": "^7.3.9",
