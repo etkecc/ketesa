@@ -81,7 +81,7 @@
     "react": "^19.2.8",
     "react-admin": "^5.15.1",
     "react-dom": "^19.2.8",
-    "react-hook-form": "7.85.0",
+    "react-hook-form": "7.88.0",
     "react-is": "^19.2.8",
     "react-router": "^7.17.0",
     "react-router-dom": "^7.18.2"
@@ -95,7 +95,7 @@
     "@mui/private-theming": "^7.3.9",
     "@mui/styled-engine": "^7.3.9",
     "@mui/types": "^7.3.9",
-    "react-hook-form": "7.85.0"
+    "react-hook-form": "7.88.0"
   },
   "scripts": {
     "start": "vite serve",
