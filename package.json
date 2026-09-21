@@ -52,7 +52,7 @@
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.9.0",
     "jsdom": "^30.0.1",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.8",
     "react-test-renderer": "^19.2.8",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.66.0",
