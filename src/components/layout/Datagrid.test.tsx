@@ -268,8 +268,6 @@ function renderWith(
   );
 }
 
-// ─── Tests ─────────────────────────────────────────────────────────────────────
-
 describe("Datagrid accessibility features", () => {
   // Mirrors UserMediaList (users/Edit.tsx): DateField, FunctionField+formatBytes, TextField, nullable TextField.
 

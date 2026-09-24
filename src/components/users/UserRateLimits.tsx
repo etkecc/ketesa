@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { useDataProvider, useRecordContext, useTranslate } from "react-admin";
 import { useFormContext } from "react-hook-form";
 
+import createLogger from "../../utils/logger";
+
+const log = createLogger("users");
+
 const RateLimitRow = ({
   limit,
   value,
@@ -64,9 +68,13 @@ const UserRateLimits = () => {
   useEffect(() => {
     if (!record) return;
     const fetchRateLimits = async () => {
-      const rateLimits = await dataProvider.getRateLimits(record.id);
-      if (Object.keys(rateLimits).length > 0) {
-        setRateLimits(rateLimits);
+      try {
+        const rateLimits = await dataProvider.getRateLimits(record.id);
+        if (Object.keys(rateLimits).length > 0) {
+          setRateLimits(rateLimits);
+        }
+      } catch (error) {
+        log.error("failed to fetch user rate limits", { id: record.id, error });
       }
     };
     fetchRateLimits();

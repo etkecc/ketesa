@@ -5,6 +5,9 @@ import { useNotify } from "react-admin";
 import { useDataProvider } from "react-admin";
 
 import { ExperimentalFeaturesModel, SynapseDataProvider } from "../../providers/types";
+import createLogger from "../../utils/logger";
+
+const log = createLogger("users");
 
 const experimentalFeaturesMap = {
   msc3881: "enable remotely toggling push notifications for another client",
@@ -62,8 +65,12 @@ export const ExperimentalFeaturesList = () => {
   useEffect(() => {
     if (!record) return;
     const fetchFeatures = async () => {
-      const features = await dataProvider.getFeatures(record.id);
-      setFeatures(features);
+      try {
+        const features = await dataProvider.getFeatures(record.id);
+        setFeatures(features);
+      } catch (error) {
+        log.error("failed to fetch experimental features", { id: record.id, error });
+      }
     };
     fetchFeatures();
   }, [dataProvider, record]);
