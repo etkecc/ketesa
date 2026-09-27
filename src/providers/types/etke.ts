@@ -97,6 +97,15 @@ export interface InvoiceEmails {
   canceled?: number;
 }
 
+export interface CompanyDetails {
+  fiscal_id: string;
+  name: string;
+  country: string;
+  address: string;
+  postal_code: string;
+  city: string;
+}
+
 export interface Component {
   id: string;
   name: string;

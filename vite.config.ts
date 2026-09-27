@@ -41,7 +41,12 @@ export default defineConfig(({ mode }) => ({
             { name: "ra", test: /node_modules[\\/].*(react-admin|ra-)/, priority: 20 },
             { name: "mui", test: /node_modules[\\/]@mui/, priority: 15 },
             { name: "react", test: /node_modules[\\/](react|react-dom|react-is|scheduler)[\\/]/, priority: 10 },
-            { name: "vendor", test: /node_modules/, priority: 5 },
+            // country packs stay out of vendor: they load per locale on demand, like the i18n messages.
+            {
+              name: "vendor",
+              test: (id: string) => /node_modules[\\/]/.test(id) && !/i18n-iso-countries[\\/]langs/.test(id),
+              priority: 5,
+            },
           ],
         },
       },

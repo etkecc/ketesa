@@ -1,4 +1,5 @@
 import { etkeProviderMethods } from "./etke";
+import type { CompanyDetails } from "../types";
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
@@ -130,5 +131,104 @@ describe("upsertInvoiceEmails", () => {
     const result = await etkeProviderMethods.upsertInvoiceEmails(url, "en", true, ["a@example.com"]);
 
     expect(result).toEqual({ enabled: true, emails: ["a@example.com"], canceled: 2 });
+  });
+});
+
+describe("company endpoints", () => {
+  const url = "https://admin.example/etke";
+  const company: CompanyDetails = {
+    fiscal_id: "DE123456789",
+    name: "Example GmbH",
+    country: "DE",
+    address: "Main St 1",
+    postal_code: "10115",
+    city: "Berlin",
+  };
+
+  describe("getCompany", () => {
+    it("returns the parsed company on 200", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify(company), { status: 200 }));
+
+      await expect(etkeProviderMethods.getCompany(url, "en")).resolves.toEqual(company);
+    });
+
+    it("returns null on 204 No Content", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+      await expect(etkeProviderMethods.getCompany(url, "en")).resolves.toBeNull();
+    });
+
+    it("surfaces the localized server error verbatim", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "This Matrix server is not registered as an etke.cc customer." }), {
+          status: 402,
+        })
+      );
+
+      await expect(etkeProviderMethods.getCompany(url, "en")).rejects.toThrow(
+        "This Matrix server is not registered as an etke.cc customer."
+      );
+    });
+
+    it("falls back to error_load when the error body is empty", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 500, statusText: "Server Error" }));
+
+      await expect(etkeProviderMethods.getCompany(url, "en")).rejects.toThrow(
+        "etkecc.billing.company_details.error_load"
+      );
+    });
+
+    it("normalizes a network rejection to the localized error_load key", async () => {
+      vi.mocked(fetch).mockRejectedValueOnce(new Error("network down"));
+
+      await expect(etkeProviderMethods.getCompany(url, "en")).rejects.toThrow(
+        "etkecc.billing.company_details.error_load"
+      );
+    });
+  });
+
+  describe("upsertCompany", () => {
+    it("returns the stored company on 200", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify(company), { status: 200 }));
+
+      await expect(etkeProviderMethods.upsertCompany(url, "en", company)).resolves.toEqual(company);
+    });
+
+    it("surfaces the VIES mismatch text verbatim", async () => {
+      const message = "The details you provided do not match the VAT registry (VIES): Company name: expected Acme GmbH";
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ error: message }), { status: 400 }));
+
+      await expect(etkeProviderMethods.upsertCompany(url, "en", company)).rejects.toThrow(message);
+    });
+
+    it("falls back to error when the error body is not JSON", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(new Response("gateway timeout", { status: 503 }));
+
+      await expect(etkeProviderMethods.upsertCompany(url, "en", company)).rejects.toThrow(
+        "etkecc.billing.company_details.error"
+      );
+    });
+
+    it("falls back to error when the error body is blank", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ error: "   " }), { status: 400 }));
+
+      await expect(etkeProviderMethods.upsertCompany(url, "en", company)).rejects.toThrow(
+        "etkecc.billing.company_details.error"
+      );
+    });
+
+    it("echoes the sent company on 204 No Content", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+      await expect(etkeProviderMethods.upsertCompany(url, "en", company)).resolves.toEqual(company);
+    });
+
+    it("normalizes a network rejection to the localized error key", async () => {
+      vi.mocked(fetch).mockRejectedValueOnce(new Error("Missing access token"));
+
+      await expect(etkeProviderMethods.upsertCompany(url, "en", company)).rejects.toThrow(
+        "etkecc.billing.company_details.error"
+      );
+    });
   });
 });

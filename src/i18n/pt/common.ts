@@ -251,14 +251,14 @@ const common: Record<string, any> = {
           postal_code: "Código postal",
           city: "Cidade",
         },
-        send: "Enviar pedido",
-        sending: "A enviar...",
+        save: "Guardar",
+        saving: "A guardar...",
         cancel: "Cancelar",
         close: "Fechar",
-        view_request: "Ver pedido",
-        success:
-          "O seu pedido foi enviado. Vamos adicionar estes dados a todas as futuras faturas; as faturas anteriores não são alteradas.",
-        error: "Não foi possível enviar o seu pedido. Tente novamente.",
+        saved:
+          "Dados da empresa guardados. Serão adicionados a todas as futuras faturas; as faturas anteriores não são alteradas.",
+        error: "Não foi possível guardar os dados da sua empresa. Tente novamente.",
+        error_load: "Não foi possível carregar os dados da sua empresa. Tente novamente.",
       },
       fields: {
         transaction_id: "ID da transação",

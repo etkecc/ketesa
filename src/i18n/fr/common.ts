@@ -256,14 +256,14 @@ const common: Record<string, any> = {
           postal_code: "Code postal",
           city: "Ville",
         },
-        send: "Envoyer la demande",
-        sending: "Envoi en cours...",
+        save: "Enregistrer",
+        saving: "Enregistrement...",
         cancel: "Annuler",
         close: "Fermer",
-        view_request: "Voir la demande",
-        success:
-          "Votre demande a été envoyée. Nous ajouterons ces informations à toutes vos futures factures ; les factures passées ne sont pas modifiées.",
-        error: "Impossible d’envoyer votre demande. Veuillez réessayer.",
+        saved:
+          "Les informations de votre entreprise ont été enregistrées. Elles seront ajoutées à toutes vos futures factures ; les factures passées ne sont pas modifiées.",
+        error: "Impossible d’enregistrer les informations de votre entreprise. Veuillez réessayer.",
+        error_load: "Impossible de charger les informations de votre entreprise. Veuillez réessayer.",
       },
       fields: {
         transaction_id: "ID de transaction",

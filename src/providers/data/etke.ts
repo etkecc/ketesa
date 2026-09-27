@@ -1,8 +1,8 @@
 import { etkeClient } from "../http";
 import createLogger from "../../utils/logger";
 
-const log = createLogger("data");
 import type {
+  CompanyDetails,
   ComponentsResponse,
   InvoiceEmails,
   NotificationsStatus,
@@ -18,6 +18,8 @@ import type {
   SupportRequest,
   SupportRequestDetail,
 } from "../types";
+
+const log = createLogger("data");
 
 export const etkeProviderMethods = {
   getServerRunningProcess: async (
@@ -643,6 +645,65 @@ export const etkeProviderMethods = {
       throw new Error(errMsg);
     }
     return (await response.json()) as InvoiceEmails;
+  },
+
+  getCompany: async (etkeAdminUrl: string, locale: string): Promise<CompanyDetails | null> => {
+    let response: Response;
+    try {
+      response = await etkeClient(`${etkeAdminUrl}/company`, locale);
+    } catch (error) {
+      // Normalize the raw non-localized network/token error to a translatable key for the dialog.
+      log.error("getCompany request failed", { error });
+      throw new Error("etkecc.billing.company_details.error_load", { cause: error });
+    }
+    if (response.status === 204) {
+      return null;
+    }
+    if (!response.ok) {
+      log.error(`getCompany: HTTP ${response.status} ${response.statusText}`);
+      // the error body carries a display-ready message; fall back to a local key only when it is empty.
+      let errMsg = "etkecc.billing.company_details.error_load";
+      try {
+        const body = await response.json();
+        // guard the type: a non-string or blank `error` would render an empty Alert or "[object Object]".
+        if (typeof body?.error === "string" && body.error.trim()) errMsg = body.error;
+      } catch {
+        /* empty error body: keep the fallback key */
+      }
+      throw new Error(errMsg);
+    }
+    return (await response.json()) as CompanyDetails;
+  },
+
+  upsertCompany: async (etkeAdminUrl: string, locale: string, company: CompanyDetails): Promise<CompanyDetails> => {
+    let response: Response;
+    try {
+      response = await etkeClient(`${etkeAdminUrl}/company`, locale, {
+        method: "POST",
+        body: JSON.stringify(company),
+      });
+    } catch (error) {
+      log.error("upsertCompany request failed", { error });
+      throw new Error("etkecc.billing.company_details.error", { cause: error });
+    }
+    if (!response.ok) {
+      log.error(`upsertCompany: HTTP ${response.status} ${response.statusText}`);
+      // VIES and field errors arrive as display-ready localized text; the key only covers an empty body.
+      let errMsg = "etkecc.billing.company_details.error";
+      try {
+        const body = await response.json();
+        // a blank or non-string `error` must not replace the fallback with an empty Alert.
+        if (typeof body?.error === "string" && body.error.trim()) errMsg = body.error;
+      } catch {
+        /* empty error body: keep the fallback key */
+      }
+      throw new Error(errMsg);
+    }
+    if (response.status === 204) {
+      // a 204 carries no body; echo the company we sent, same as the other upsert methods.
+      return company;
+    }
+    return (await response.json()) as CompanyDetails;
   },
 
   getSupportRequests: async (etkeAdminUrl: string, locale: string) => {

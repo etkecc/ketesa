@@ -253,14 +253,14 @@ const common: Record<string, any> = {
           postal_code: "Codice postale",
           city: "Città",
         },
-        send: "Invia richiesta",
-        sending: "Invio in corso...",
+        save: "Salva",
+        saving: "Salvataggio in corso...",
         cancel: "Annulla",
         close: "Chiudi",
-        view_request: "Visualizza richiesta",
-        success:
-          "La richiesta è stata inviata. Aggiungeremo questi dati a tutte le fatture future; le fatture precedenti non vengono modificate.",
-        error: "Impossibile inviare la richiesta. Riprovi.",
+        saved:
+          "Dati aziendali salvati. Verranno aggiunti a tutte le fatture future; le fatture precedenti non vengono modificate.",
+        error: "Impossibile salvare i dati aziendali. Riprovi.",
+        error_load: "Impossibile caricare i dati aziendali. Riprovi.",
       },
       fields: {
         transaction_id: "ID transazione",

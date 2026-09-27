@@ -98,8 +98,6 @@ const BillingPage = () => {
   const closeCompanyDialog = useCallback(() => setCompanyDialogOpen(false), []);
   const [invoiceEmailsDialogOpen, setInvoiceEmailsDialogOpen] = useState(false);
   const closeInvoiceEmailsDialog = useCallback(() => setInvoiceEmailsDialogOpen(false), []);
-  // one binding for button + dialog so their guards can't drift apart (a dead-click/pop-open race if they do).
-  const supportAvailable = !!etkeccAdmin && !icfg.disabled.support;
 
   useDocTitle(translate("etkecc.billing.name"));
   useEffect(() => {
@@ -195,7 +193,7 @@ const BillingPage = () => {
             <br />
             {translate("etkecc.billing.description2")}
           </Typography>
-          {supportAvailable ? (
+          {etkeccAdmin && (
             <Button
               variant="outlined"
               size="small"
@@ -206,15 +204,9 @@ const BillingPage = () => {
             >
               {translate("etkecc.billing.company_details.open")}
             </Button>
-          ) : (
-            <Typography variant="body2" sx={{ mt: 0.5 }}>
-              <Link href="https://etke.cc/help/payments/#how-to-add-company-details-to-the-invoices" target="_blank">
-                etke.cc/help/payments/#how-to-add-company-details-to-the-invoices
-              </Link>
-            </Typography>
           )}
         </EtkeAttribution>
-        {supportAvailable && (
+        {etkeccAdmin && (
           <CompanyDetailsDialog etkeccAdmin={etkeccAdmin} open={companyDialogOpen} onClose={closeCompanyDialog} />
         )}
         {etkeccAdmin && (

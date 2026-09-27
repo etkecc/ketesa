@@ -3,6 +3,7 @@ import polyglotI18nProvider from "ra-i18n-polyglot";
 import { resolveBrowserLocale } from "react-admin";
 
 import type { SynapseTranslationMessages } from "./types";
+import { loadCountryLocale } from "../utils/countries";
 
 const supportedLocales = ["en", "de", "fa", "fr", "it", "ja", "pt", "ru", "uk", "zh"] as const;
 type SupportedLocale = (typeof supportedLocales)[number];
@@ -66,6 +67,8 @@ export async function createI18nProvider() {
 
   const enMessages = await loaders.en();
   const initialMessages = initialLocale !== "en" ? merge({}, enMessages, await loaders[initialLocale]()) : enMessages;
+  // country names ride the same lifecycle as the messages: registered before the app renders.
+  await loadCountryLocale(initialLocale);
   setHtmlLang(initialLocale);
 
   const cache: Partial<Record<SupportedLocale, SynapseTranslationMessages>> = {
@@ -84,7 +87,7 @@ export async function createI18nProvider() {
         setHtmlLang("en");
         return enMessages;
       }
-      return loaders[locale]().then(msgs => {
+      return Promise.all([loaders[locale](), loadCountryLocale(locale)]).then(([msgs]) => {
         const merged = merge({}, enMessages, msgs);
         cache[locale] = merged;
         setHtmlLang(locale);

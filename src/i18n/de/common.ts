@@ -259,14 +259,14 @@ const common: Record<string, any> = {
           postal_code: "Postleitzahl",
           city: "Stadt",
         },
-        send: "Anfrage senden",
-        sending: "Wird gesendet...",
+        save: "Speichern",
+        saving: "Wird gespeichert...",
         cancel: "Abbrechen",
         close: "Schließen",
-        view_request: "Anfrage anzeigen",
-        success:
-          "Ihre Anfrage wurde gesendet. Wir fügen diese Angaben zu allen zukünftigen Rechnungen hinzu; vergangene Rechnungen werden nicht geändert.",
-        error: "Ihre Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+        saved:
+          "Firmendaten gespeichert. Sie werden zu allen zukünftigen Rechnungen hinzugefügt; vergangene Rechnungen werden nicht geändert.",
+        error: "Ihre Firmendaten konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+        error_load: "Ihre Firmendaten konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
       },
       fields: {
         transaction_id: "Transaktions-ID",

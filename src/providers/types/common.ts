@@ -4,6 +4,7 @@ import type { AccountDataModel, ExperimentalFeaturesModel, RateLimitsModel, User
 import type { EventContextResult, RoomHierarchyResult, RoomMessagesResult } from "./rooms";
 import type { MASPolicyData } from "./mas";
 import type {
+  CompanyDetails,
   ComponentsResponse,
   InvoiceEmails,
   PaymentsResponse,
@@ -227,6 +228,8 @@ export interface SynapseDataProvider extends DataProvider {
     enabled: boolean,
     emails: string[]
   ) => Promise<InvoiceEmails>;
+  getCompany: (etkeAdminUrl: string, locale: string) => Promise<CompanyDetails | null>;
+  upsertCompany: (etkeAdminUrl: string, locale: string, company: CompanyDetails) => Promise<CompanyDetails>;
   getSupportRequests: (etkeAdminUrl: string, locale: string) => Promise<SupportRequest[]>;
   getSupportRequest: (
     etkeAdminUrl: string,

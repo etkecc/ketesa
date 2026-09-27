@@ -1049,13 +1049,13 @@ export interface SynapseTranslationMessages extends TranslationMessages {
           postal_code: string;
           city: string;
         };
-        send: string;
-        sending: string;
+        save: string;
+        saving: string;
         cancel: string;
         close: string;
-        view_request: string;
-        success: string;
+        saved: string;
         error: string;
+        error_load: string;
       };
       fields: {
         transaction_id: string;
