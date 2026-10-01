@@ -126,7 +126,9 @@ const ComponentsPage = () => {
           return `<li>${c.name}${sectionName ? ` (${sectionName})` : ""}: add</li>`;
         })
         .join("");
-      const message = `<p>Hello,</p><p>I would like to change the following components on my server:</p><ul>${removeList}${addList}</ul><p>Thank you.</p>`;
+      const priceChangeMsg =
+        previewPrice != totalPrice ? `<p>Preview price was: ${currencySymbol}${previewPrice}</p>` : "";
+      const message = `<p>Hello,</p><p>I would like to change the following components on my server:</p><ul>${removeList}${addList}</ul>${priceChangeMsg}<p>Thank you.</p>`;
       const created = await dataProvider.createSupportRequest(etkeccAdmin, locale, "Component changes", message);
       setSessionRequestId(created.id);
       setSubmittedRequest(created);
