@@ -524,7 +524,8 @@ export const getMASUsersAsMainResource = () => ({
     if (data.deactivated !== undefined && data.deactivated !== prev.deactivated) body.deactivated = !!data.deactivated;
     if (data.displayname !== undefined && data.displayname !== prev.displayname)
       body.displayname = data.displayname ?? "";
-    if (data.avatar_src !== undefined && data.avatar_src !== prev.avatar_src) body.avatar_url = data.avatar_src ?? "";
+    // beforeUpdate's fall-through stores uploads/erases in avatar_url, the Synapse v2 transport field.
+    if (data.avatar_url !== undefined && data.avatar_url !== prev.avatar_src) body.avatar_url = data.avatar_url ?? "";
     if (data.user_type !== undefined && data.user_type !== prev.user_type) body.user_type = data.user_type;
 
     if (Object.keys(body).length > 0) {

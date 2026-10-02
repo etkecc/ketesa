@@ -18,10 +18,15 @@ vi.mock("./synapse", () => ({
   invalidateManyRefCache: vi.fn(),
 }));
 
+import type { Options } from "react-admin";
+
 import { wrapWithLifecycle } from "./lifecycle";
 import { isMAS } from "./mas-utils";
 import { jsonClient } from "../http";
 import { getMASUsersAsMainResource } from "./mas";
+
+// Minimal jsonClient response for mocks; mirrors fetchUtils.fetchJson's return shape.
+const mockJsonResponse = (json: unknown) => ({ status: 200, headers: new Headers(), body: "", json });
 
 interface MockBase {
   masSetAdmin: ReturnType<typeof vi.fn>;
@@ -400,6 +405,77 @@ describe("getMASUsersAsMainResource.update", () => {
 
     // No MAS user GET to /api/admin/v1/users/<ulid>
     expect(calls.some(c => /\/api\/admin\/v1\/users\/[^?/]+$/.test(c.url))).toBe(false);
+  });
+
+  it("(no mas_id) PUTs avatar_url set by beforeUpdate's fall-through after an upload", async () => {
+    const calls: { url: string; method?: string; body?: unknown }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: Options) => {
+      calls.push({ url, method: opts?.method, body: opts?.body });
+      if (url.includes("/api/admin/v1/users?")) return mockJsonResponse({ data: [] });
+      if (opts?.method === undefined && url.includes("/_synapse/admin/v2/users/")) {
+        return mockJsonResponse({ displayname: "Bot", avatar_url: "mxc://hs/new", creation_ts: 0 });
+      }
+      return mockJsonResponse({});
+    });
+
+    const res = getMASUsersAsMainResource();
+    await res.update({
+      id: "@bot:hs.example.com",
+      previousData: { id: "@bot:hs.example.com", mas_id: undefined, avatar_src: null },
+      // beforeUpdate's fall-through uploads the media and stores the content URI in avatar_url
+      data: { id: "@bot:hs.example.com", avatar_url: "mxc://hs/new" },
+    });
+
+    const synapsePuts = calls.filter(c => c.method === "PUT" && c.url.includes("/_synapse/admin/v2/users/"));
+    expect(synapsePuts).toHaveLength(1);
+    expect(JSON.parse(String(synapsePuts[0].body))).toEqual({ avatar_url: "mxc://hs/new" });
+  });
+
+  it("(no mas_id) PUTs an empty avatar_url to erase the avatar", async () => {
+    const calls: { url: string; method?: string; body?: unknown }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: Options) => {
+      calls.push({ url, method: opts?.method, body: opts?.body });
+      if (url.includes("/api/admin/v1/users?")) return mockJsonResponse({ data: [] });
+      if (opts?.method === undefined && url.includes("/_synapse/admin/v2/users/")) {
+        return mockJsonResponse({ displayname: "Bot", avatar_url: null, creation_ts: 0 });
+      }
+      return mockJsonResponse({});
+    });
+
+    const res = getMASUsersAsMainResource();
+    await res.update({
+      id: "@bot:hs.example.com",
+      previousData: { id: "@bot:hs.example.com", mas_id: undefined, avatar_src: "mxc://hs/old" },
+      // beforeUpdate's fall-through sets avatar_url to "" when the avatar is erased
+      data: { id: "@bot:hs.example.com", avatar_url: "" },
+    });
+
+    const synapsePuts = calls.filter(c => c.method === "PUT" && c.url.includes("/_synapse/admin/v2/users/"));
+    expect(synapsePuts).toHaveLength(1);
+    expect(JSON.parse(String(synapsePuts[0].body))).toEqual({ avatar_url: "" });
+  });
+
+  it("(no mas_id) leaves avatar_url out of the PUT when only displayname changes", async () => {
+    const calls: { url: string; method?: string; body?: unknown }[] = [];
+    vi.mocked(jsonClient).mockImplementation(async (url: string, opts?: Options) => {
+      calls.push({ url, method: opts?.method, body: opts?.body });
+      if (url.includes("/api/admin/v1/users?")) return mockJsonResponse({ data: [] });
+      if (opts?.method === undefined && url.includes("/_synapse/admin/v2/users/")) {
+        return mockJsonResponse({ displayname: "Bot 2", avatar_url: "mxc://hs/old", creation_ts: 0 });
+      }
+      return mockJsonResponse({});
+    });
+
+    const res = getMASUsersAsMainResource();
+    await res.update({
+      id: "@bot:hs.example.com",
+      previousData: { id: "@bot:hs.example.com", mas_id: undefined, displayname: "Bot", avatar_src: "mxc://hs/old" },
+      data: { id: "@bot:hs.example.com", displayname: "Bot 2" },
+    });
+
+    const synapsePuts = calls.filter(c => c.method === "PUT" && c.url.includes("/_synapse/admin/v2/users/"));
+    expect(synapsePuts).toHaveLength(1);
+    expect(JSON.parse(String(synapsePuts[0].body))).toEqual({ displayname: "Bot 2" });
   });
 
   it("(with mas_id) issues MAS GET by ULID + Synapse v2 profile merge GET", async () => {

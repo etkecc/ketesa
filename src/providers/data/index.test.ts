@@ -779,6 +779,72 @@ describe("dataProvider", () => {
     expect(result.data.erased).toBe(true);
   });
 
+  describe("MAS mode, Synapse-only (appservice) user avatar update", () => {
+    const initMASDataProvider = async () => {
+      // Static import can't be re-evaluated after resetModules; a fresh import re-reads the MAS flag.
+      vi.resetModules();
+      const { default: freshDataProvider } = await import("./index");
+      localStorage.setItem("token_endpoint", "http://mas.example/oauth2/token");
+      localStorage.setItem("RaStore.isMAS", "true");
+      localStorage.setItem("home_server", "hs");
+      const { initResources } = await import("./index");
+      initResources();
+      return freshDataProvider;
+    };
+
+    // Captures Synapse v2 PUT bodies; the MAS lookup returns no user, so the Synapse-only branch runs.
+    const mockAvatarFetch = (putBodies: string[], profileAvatar: string | null) => {
+      vi.mocked(fetch).mockImplementation(async (input: string | URL | Request, opts?: RequestInit) => {
+        const u = String(input);
+        if (u.includes("/_matrix/media/v3/upload")) {
+          return new Response(JSON.stringify({ content_uri: "mxc://hs/new" }));
+        }
+        if (u.includes("/_synapse/admin/v2/users/") && opts?.method === "PUT") {
+          putBodies.push(String(opts.body));
+          return new Response(JSON.stringify({}));
+        }
+        if (u.includes("/api/admin/v1/users?")) {
+          return new Response(JSON.stringify({ data: [] }));
+        }
+        if (u.includes("/_synapse/admin/v2/users/")) {
+          return new Response(JSON.stringify({ displayname: "Bot", avatar_url: profileAvatar, creation_ts: 0 }));
+        }
+        return new Response(JSON.stringify({}));
+      });
+    };
+
+    it("PUTs the uploaded avatar_url to Synapse v2", async () => {
+      const provider = await initMASDataProvider();
+      const putBodies: string[] = [];
+      mockAvatarFetch(putBodies, "mxc://hs/new");
+
+      const file = new File(["x"], "backrest.png", { type: "image/png" });
+      await provider.update("users", {
+        id: "@_webhooks_backrest:hs",
+        previousData: { id: "@_webhooks_backrest:hs", mas_id: undefined, avatar_src: "mxc://hs/old" },
+        data: { id: "@_webhooks_backrest:hs", avatar_file: { rawFile: file, src: "blob:x", title: "backrest.png" } },
+      });
+
+      expect(putBodies).toHaveLength(1);
+      expect(JSON.parse(putBodies[0])).toEqual({ avatar_url: "mxc://hs/new" });
+    });
+
+    it("PUTs an empty avatar_url to erase the avatar", async () => {
+      const provider = await initMASDataProvider();
+      const putBodies: string[] = [];
+      mockAvatarFetch(putBodies, null);
+
+      await provider.update("users", {
+        id: "@_webhooks_backrest:hs",
+        previousData: { id: "@_webhooks_backrest:hs", mas_id: undefined, avatar_src: "mxc://hs/old" },
+        data: { id: "@_webhooks_backrest:hs", avatar_erase: true },
+      });
+
+      expect(putBodies).toHaveLength(1);
+      expect(JSON.parse(putBodies[0])).toEqual({ avatar_url: "" });
+    });
+  });
+
   it("createMany sends one notice per recipient with no cross-contamination", async () => {
     // Guards the wrong-recipient hazard, and uses mockImplementation since a Response body reads only once.
     vi.mocked(fetch).mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ event_id: "$evt" }))));
