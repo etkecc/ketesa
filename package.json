@@ -35,7 +35,7 @@
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.3",
-    "@types/lodash": "^4.17.25",
+    "@types/lodash": "^4.17.26",
     "@types/node": "^26.2.0",
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19.2.18",
