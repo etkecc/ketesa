@@ -162,6 +162,43 @@ export const refreshAccessToken = async (): Promise<boolean> => {
   }
 };
 
+// Ends a session from the OAuth 2.0 API login by revoking its tokens (RFC 7009); the spec has such clients use
+// token revocation instead of /logout, which the homeserver doesn't serve for them (MAS answers it with 401).
+// Returns false when the session didn't come from that login, so the caller uses /logout instead.
+export const revokeOAuthTokens = async (): Promise<boolean> => {
+  const revocationEndpoint = localStorage.getItem("revocation_endpoint");
+  const clientId = localStorage.getItem("clientId");
+
+  if (!revocationEndpoint || !clientId) {
+    return false;
+  }
+
+  // Both tokens, as matrix-js-sdk does: an expired access token is unknown to the server (200, nothing revoked),
+  // while the refresh token still ends the session.
+  // The storage keys double as the RFC 7009 token type hints.
+  const revoke = async (tokenType: "access_token" | "refresh_token") => {
+    const token = localStorage.getItem(tokenType);
+    if (!token) {
+      return;
+    }
+    try {
+      await fetchUtils.fetchJson(revocationEndpoint, {
+        method: "POST",
+        headers: new Headers({
+          Accept: "application/json",
+          "Content-Type": "application/x-www-form-urlencoded",
+        }),
+        body: new URLSearchParams({ token, token_type_hint: tokenType, client_id: clientId }).toString(),
+      });
+    } catch (err) {
+      log.warn(`${tokenType} revocation failed`, err);
+    }
+  };
+
+  await Promise.all([revoke("access_token"), revoke("refresh_token")]);
+  return true;
+};
+
 interface ClientRegistration {
   client_id: string;
   client_name: string;
@@ -243,6 +280,11 @@ export const handleOIDCAuth = async (authMetadata: AuthMetadata, clientUrl: stri
 
   localStorage.setItem("clientId", clientId);
   localStorage.setItem("token_endpoint", authMetadata.token_endpoint);
+  if (authMetadata.revocation_endpoint) {
+    localStorage.setItem("revocation_endpoint", authMetadata.revocation_endpoint);
+  } else {
+    localStorage.removeItem("revocation_endpoint");
+  }
   let deviceId = localStorage.getItem("device_id");
   if (!deviceId) {
     deviceId = generateDeviceId();

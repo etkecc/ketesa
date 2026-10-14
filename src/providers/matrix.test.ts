@@ -7,6 +7,8 @@ import {
   resolveBaseUrlWithWellKnown,
   getWellKnownUrl,
   getAuthMetadata,
+  handleOIDCAuth,
+  revokeOAuthTokens,
   uploadMedia,
 } from "./matrix";
 import { jsonClient } from "./http";
@@ -349,5 +351,111 @@ describe("uploadMedia", () => {
       content_type: "text/plain",
     });
     expect(result).toEqual({ content_uri: "mxc://hs.example/abc123" });
+  });
+});
+
+describe("handleOIDCAuth", () => {
+  const fetchJsonMock = fetchUtils.fetchJson as Mock;
+  const metadata = {
+    issuer: "https://auth.example.com/",
+    authorization_endpoint: "https://auth.example.com/oauth2/auth",
+    token_endpoint: "https://auth.example.com/oauth2/token",
+    registration_endpoint: "https://auth.example.com/oauth2/clients/register",
+    revocation_endpoint: "https://auth.example.com/oauth2/revoke",
+  };
+
+  beforeEach(() => {
+    localStorage.clear();
+    fetchJsonMock.mockResolvedValueOnce({
+      json: { client_id: "client123", redirect_uris: ["https://admin.example.com/auth-callback/"] },
+    });
+  });
+
+  afterEach(() => {
+    fetchJsonMock.mockReset();
+  });
+
+  it("stores the revocation endpoint for logout", async () => {
+    await handleOIDCAuth(metadata, "https://admin.example.com");
+
+    expect(localStorage.getItem("revocation_endpoint")).toBe("https://auth.example.com/oauth2/revoke");
+  });
+
+  it("drops a stored revocation endpoint when the server has none", async () => {
+    localStorage.setItem("revocation_endpoint", "https://old.example.com/oauth2/revoke");
+    const { revocation_endpoint: _, ...withoutRevocation } = metadata;
+
+    await handleOIDCAuth(withoutRevocation, "https://admin.example.com");
+
+    expect(localStorage.getItem("revocation_endpoint")).toBeNull();
+  });
+});
+
+describe("revokeOAuthTokens", () => {
+  const fetchJsonMock = fetchUtils.fetchJson as Mock;
+  const revocationEndpoint = "https://auth.example.com/oauth2/revoke";
+
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    fetchJsonMock.mockReset();
+  });
+
+  const revocationBody = (call: unknown[]) =>
+    Object.fromEntries(new URLSearchParams((call[1] as RequestInit).body as string));
+
+  it("returns false and sends nothing when the session didn't come from the OAuth login", async () => {
+    localStorage.setItem("access_token", "syt_token");
+
+    await expect(revokeOAuthTokens()).resolves.toBe(false);
+    expect(fetchJsonMock).not.toHaveBeenCalled();
+  });
+
+  it("revokes the access and refresh tokens as a public client", async () => {
+    localStorage.setItem("revocation_endpoint", revocationEndpoint);
+    localStorage.setItem("clientId", "client123");
+    localStorage.setItem("access_token", "mat_access");
+    localStorage.setItem("refresh_token", "mar_refresh");
+    fetchJsonMock.mockResolvedValue({ status: 200, json: {} });
+
+    await expect(revokeOAuthTokens()).resolves.toBe(true);
+
+    expect(fetchJsonMock).toHaveBeenCalledTimes(2);
+    for (const call of fetchJsonMock.mock.calls) {
+      expect(call[0]).toBe(revocationEndpoint);
+      expect(call[1].method).toBe("POST");
+      expect(call[1].headers.get("Content-Type")).toBe("application/x-www-form-urlencoded");
+    }
+    expect(fetchJsonMock.mock.calls.map(revocationBody)).toEqual([
+      { token: "mat_access", token_type_hint: "access_token", client_id: "client123" },
+      { token: "mar_refresh", token_type_hint: "refresh_token", client_id: "client123" },
+    ]);
+  });
+
+  it("revokes only the access token when there is no refresh token", async () => {
+    localStorage.setItem("revocation_endpoint", revocationEndpoint);
+    localStorage.setItem("clientId", "client123");
+    localStorage.setItem("access_token", "mat_access");
+    fetchJsonMock.mockResolvedValue({ status: 200, json: {} });
+
+    await revokeOAuthTokens();
+
+    expect(fetchJsonMock.mock.calls.map(revocationBody)).toEqual([
+      { token: "mat_access", token_type_hint: "access_token", client_id: "client123" },
+    ]);
+  });
+
+  it("still returns true when a revocation request fails", async () => {
+    localStorage.setItem("revocation_endpoint", revocationEndpoint);
+    localStorage.setItem("clientId", "client123");
+    localStorage.setItem("access_token", "mat_access");
+    localStorage.setItem("refresh_token", "mar_refresh");
+    fetchJsonMock.mockRejectedValueOnce(new Error("network error"));
+    fetchJsonMock.mockResolvedValueOnce({ status: 200, json: {} });
+
+    await expect(revokeOAuthTokens()).resolves.toBe(true);
+    expect(fetchJsonMock).toHaveBeenCalledTimes(2);
   });
 });

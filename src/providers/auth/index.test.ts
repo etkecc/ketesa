@@ -133,6 +133,28 @@ describe("authProvider", () => {
 
       expect(localStorage.getItem("home_server")).toEqual("example.com:8008");
     });
+
+    it("drops the revocation endpoint of an unfinished OIDC login, so logout uses /logout", async () => {
+      localStorage.setItem("revocation_endpoint", "https://auth.example.com/oauth2/revoke");
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            user_id: "@admin:example.com",
+            access_token: "tok",
+            device_id: "dev",
+          })
+        )
+      );
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({})));
+
+      await authProvider.login({
+        base_url: "http://example.com",
+        username: "@admin:example.com",
+        password: "pass",
+      });
+
+      expect(localStorage.getItem("revocation_endpoint")).toBeNull();
+    });
   });
 
   it("should successfully login with token", async () => {
@@ -223,6 +245,35 @@ describe("authProvider", () => {
         credentials: "same-origin",
         user: { authenticated: true, token: "Bearer foo" },
       });
+      expect(localStorage.getItem("access_token")).toBeNull();
+    });
+
+    it("revokes the tokens instead of calling /logout after an OAuth login", async () => {
+      localStorage.setItem("base_url", "example.com");
+      localStorage.setItem("access_token", "mat_access");
+      localStorage.setItem("refresh_token", "mar_refresh");
+      localStorage.setItem("clientId", "client_id");
+      localStorage.setItem("revocation_endpoint", "https://auth.example.com/oauth2/revoke");
+      vi.mocked(fetch).mockResolvedValue(new Response(""));
+
+      await authProvider.logout(null);
+
+      const urls = vi.mocked(fetch).mock.calls.map(call => call[0]);
+      expect(urls).toEqual(["https://auth.example.com/oauth2/revoke", "https://auth.example.com/oauth2/revoke"]);
+      expect(localStorage.getItem("access_token")).toBeNull();
+      expect(localStorage.getItem("revocation_endpoint")).toBeNull();
+    });
+
+    it("clears the session even when revocation fails", async () => {
+      localStorage.setItem("base_url", "example.com");
+      localStorage.setItem("access_token", "mat_access");
+      localStorage.setItem("clientId", "client_id");
+      localStorage.setItem("revocation_endpoint", "https://auth.example.com/oauth2/revoke");
+      vi.mocked(fetch).mockRejectedValue(new TypeError("Failed to fetch"));
+
+      await authProvider.logout(null);
+
+      expect(fetch).toHaveBeenCalledTimes(1);
       expect(localStorage.getItem("access_token")).toBeNull();
     });
   });

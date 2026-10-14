@@ -5,7 +5,7 @@ import createLogger from "../../utils/logger";
 
 const log = createLogger("auth");
 
-import { AuthMetadata, handleOIDCAuth, refreshAccessToken } from "../matrix";
+import { AuthMetadata, handleOIDCAuth, refreshAccessToken, revokeOAuthTokens } from "../matrix";
 import { detectAndSetMAS } from "../data/mas";
 import { initResources } from "../data";
 import { fetchServerVersions, clearServerVersions } from "../serverVersion";
@@ -65,6 +65,9 @@ const authProvider: AuthProvider = {
       await userManager.signinRedirect();
       return;
     }
+
+    // Left over from an OIDC login that wasn't finished; this session ends with /logout.
+    localStorage.removeItem("revocation_endpoint");
 
     const config = GetConfig();
     const icfg = GetInstanceConfig();
@@ -325,7 +328,9 @@ const authProvider: AuthProvider = {
 
     if (typeof access_token === "string") {
       try {
-        await fetchUtils.fetchJson(logout_api_url, options);
+        if (!(await revokeOAuthTokens())) {
+          await fetchUtils.fetchJson(logout_api_url, options);
+        }
       } catch (err) {
         log.warn("logout: server call failed (session cleared anyway)", err);
       } finally {
