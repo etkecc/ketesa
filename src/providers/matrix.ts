@@ -100,9 +100,7 @@ export const getAuthMetadata = async (baseUrl: string, signal?: AbortSignal): Pr
   return null;
 };
 
-// Singleton refresh promise, shared by every caller (data requests and checkAuth).
-// The refresh token rotates on each use: a second refresh with the same token makes MAS revoke
-// the tokens it issued for the first one, so concurrent refreshes would leave revoked tokens.
+// One refresh shared by all callers: MAS rotates refresh tokens, so concurrent refreshes revoke each other's tokens.
 let ongoingRefresh: Promise<boolean> | null = null;
 
 export const refreshAccessToken = (): Promise<boolean> => {
@@ -176,9 +174,7 @@ const requestTokenRefresh = async (): Promise<boolean> => {
   }
 };
 
-// Ends a session from the OAuth 2.0 API login by revoking its tokens (RFC 7009); the spec has such clients use
-// token revocation instead of /logout, which the homeserver doesn't serve for them (MAS answers it with 401).
-// Returns false when the session didn't come from that login, so the caller uses /logout instead.
+// Ends an OAuth 2.0 API session by revoking its tokens (RFC 7009), as /logout fails there; false means use /logout.
 export const revokeOAuthTokens = async (): Promise<boolean> => {
   const revocationEndpoint = localStorage.getItem("revocation_endpoint");
   const clientId = localStorage.getItem("clientId");
@@ -187,9 +183,7 @@ export const revokeOAuthTokens = async (): Promise<boolean> => {
     return false;
   }
 
-  // Both tokens, as matrix-js-sdk does: an expired access token is unknown to the server (200, nothing revoked),
-  // while the refresh token still ends the session.
-  // The storage keys double as the RFC 7009 token type hints.
+  // Revokes both, as matrix-js-sdk does: an expired access token is a no-op, the refresh token ends the session.
   const revoke = async (tokenType: "access_token" | "refresh_token") => {
     const token = localStorage.getItem(tokenType);
     if (!token) {
