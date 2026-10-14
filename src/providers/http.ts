@@ -7,9 +7,6 @@ import createLogger from "../utils/logger";
 
 const log = createLogger("http");
 
-// Singleton refresh promise; prevents multiple concurrent refresh requests
-let ongoingRefresh: Promise<boolean> | null = null;
-
 // Adds the access token to all requests
 export const jsonClient = async (url: string, options: Options = {}) => {
   // Check if token needs refresh before making the request
@@ -27,12 +24,8 @@ export const jsonClient = async (url: string, options: Options = {}) => {
         status: timeUntilExpiry <= 0 ? "expired" : "expiring soon",
         timeUntilExpiry,
       });
-      if (!ongoingRefresh) {
-        ongoingRefresh = refreshAccessToken().finally(() => {
-          ongoingRefresh = null;
-        });
-      }
-      await ongoingRefresh;
+      // refreshAccessToken() shares one refresh between concurrent callers
+      await refreshAccessToken();
     }
   }
 

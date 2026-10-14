@@ -100,8 +100,22 @@ export const getAuthMetadata = async (baseUrl: string, signal?: AbortSignal): Pr
   return null;
 };
 
+// Singleton refresh promise, shared by every caller (data requests and checkAuth).
+// The refresh token rotates on each use: a second refresh with the same token makes MAS revoke
+// the tokens it issued for the first one, so concurrent refreshes would leave revoked tokens.
+let ongoingRefresh: Promise<boolean> | null = null;
+
+export const refreshAccessToken = (): Promise<boolean> => {
+  if (!ongoingRefresh) {
+    ongoingRefresh = requestTokenRefresh().finally(() => {
+      ongoingRefresh = null;
+    });
+  }
+  return ongoingRefresh;
+};
+
 // Refreshes the access token; based on authts/oidc-client-ts docs/protocols/refresh-token-grant.md.
-export const refreshAccessToken = async (): Promise<boolean> => {
+const requestTokenRefresh = async (): Promise<boolean> => {
   const refreshToken = localStorage.getItem("refresh_token");
   const tokenEndpoint = localStorage.getItem("token_endpoint");
   const clientId = localStorage.getItem("clientId");

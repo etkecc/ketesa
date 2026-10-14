@@ -10,6 +10,7 @@ import {
   handleOIDCAuth,
   revokeOAuthTokens,
   uploadMedia,
+  refreshAccessToken,
 } from "./matrix";
 import { jsonClient } from "./http";
 
@@ -456,6 +457,58 @@ describe("revokeOAuthTokens", () => {
     fetchJsonMock.mockResolvedValueOnce({ status: 200, json: {} });
 
     await expect(revokeOAuthTokens()).resolves.toBe(true);
+    expect(fetchJsonMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("refreshAccessToken", () => {
+  const fetchJsonMock = fetchUtils.fetchJson as Mock;
+
+  beforeEach(() => {
+    localStorage.clear();
+    localStorage.setItem("refresh_token", "mar_old");
+    localStorage.setItem("token_endpoint", "https://auth.example/oauth2/token");
+    localStorage.setItem("clientId", "client123");
+  });
+
+  afterEach(() => {
+    fetchJsonMock.mockReset();
+  });
+
+  const tokenResponse = (n: number) => ({
+    json: { access_token: `mat_${n}`, refresh_token: `mar_${n}`, expires_in: 300 },
+  });
+
+  it("sends one request for concurrent calls and resolves all of them", async () => {
+    let resolveFetch!: (value: unknown) => void;
+    fetchJsonMock.mockReturnValueOnce(new Promise(resolve => (resolveFetch = resolve)));
+
+    const first = refreshAccessToken();
+    const second = refreshAccessToken();
+    resolveFetch(tokenResponse(1));
+
+    await expect(Promise.all([first, second])).resolves.toEqual([true, true]);
+    expect(fetchJsonMock).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem("access_token")).toBe("mat_1");
+    expect(localStorage.getItem("refresh_token")).toBe("mar_1");
+  });
+
+  it("sends a new request with the rotated refresh token once the previous refresh has finished", async () => {
+    fetchJsonMock.mockResolvedValueOnce(tokenResponse(1)).mockResolvedValueOnce(tokenResponse(2));
+
+    await refreshAccessToken();
+    await refreshAccessToken();
+
+    expect(fetchJsonMock).toHaveBeenCalledTimes(2);
+    expect(fetchJsonMock.mock.calls[1][1].body).toContain("refresh_token=mar_1");
+    expect(localStorage.getItem("access_token")).toBe("mat_2");
+  });
+
+  it("allows a new attempt after a failed refresh", async () => {
+    fetchJsonMock.mockRejectedValueOnce(new Error("network")).mockResolvedValueOnce(tokenResponse(1));
+
+    await expect(refreshAccessToken()).resolves.toBe(false);
+    await expect(refreshAccessToken()).resolves.toBe(true);
     expect(fetchJsonMock).toHaveBeenCalledTimes(2);
   });
 });
