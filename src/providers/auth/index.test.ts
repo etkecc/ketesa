@@ -22,12 +22,22 @@ vi.mock("../data/mas", async () => ({
   detectAndSetMAS: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../matrix", async importOriginal => {
+  const actual = await importOriginal<typeof import("../matrix")>();
+
+  return {
+    ...actual,
+    getAuthMetadata: vi.fn(actual.getAuthMetadata),
+  };
+});
+
 import { HttpError } from "ra-core";
 
 import authProvider from "./index";
 import { initResources } from "../data";
 import { UserManager } from "oidc-client-ts";
 import { detectAndSetMAS } from "../data/mas";
+import { getAuthMetadata } from "../matrix";
 
 describe("authProvider", () => {
   beforeEach(() => {
@@ -178,12 +188,15 @@ describe("authProvider", () => {
         },
       });
 
+      expect(getAuthMetadata).not.toHaveBeenCalled();
       expect(localStorage.getItem("token_endpoint")).toBe("https://mas.example.com/oauth2/token");
       expect(detectAndSetMAS).toHaveBeenCalledTimes(1);
     });
 
     it("clears a stale MAS token endpoint when access-token login has no auth metadata", async () => {
       localStorage.setItem("token_endpoint", "https://old-mas.example.com/oauth2/token");
+
+      vi.mocked(getAuthMetadata).mockResolvedValueOnce(null);
 
       vi.mocked(fetch).mockResolvedValueOnce(
         new Response(
@@ -200,7 +213,38 @@ describe("authProvider", () => {
         accessToken: "token",
       });
 
+      expect(getAuthMetadata).toHaveBeenCalledWith("https://example.com");
       expect(localStorage.getItem("token_endpoint")).toBeNull();
+    });
+
+    it("fetches auth metadata for access-token login when the login page did not supply it", async () => {
+      vi.mocked(getAuthMetadata).mockResolvedValueOnce({
+        issuer: "https://mas.example.com",
+        authorization_endpoint: "https://mas.example.com/authorize",
+        token_endpoint: "https://mas.example.com/oauth2/token",
+      });
+
+      vi.mocked(fetch).mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            user_id: "@admin:example.com",
+            device_id: "DEVICE",
+          })
+        )
+      );
+
+      vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({})));
+
+      await authProvider.login({
+        base_url: "https://example.com",
+        accessToken: "mpt_personal_access_token",
+      });
+
+      expect(getAuthMetadata).toHaveBeenCalledWith("https://example.com");
+
+      expect(localStorage.getItem("token_endpoint")).toBe("https://mas.example.com/oauth2/token");
+
+      expect(detectAndSetMAS).toHaveBeenCalledTimes(1);
     });
   });
 

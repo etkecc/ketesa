@@ -5,7 +5,7 @@ import createLogger from "../../utils/logger";
 
 const log = createLogger("auth");
 
-import { AuthMetadata, handleOIDCAuth, refreshAccessToken, revokeOAuthTokens } from "../matrix";
+import { AuthMetadata, getAuthMetadata, handleOIDCAuth, refreshAccessToken, revokeOAuthTokens } from "../matrix";
 import { detectAndSetMAS } from "../data/mas";
 import { initResources } from "../data";
 import { fetchServerVersions, clearServerVersions } from "../serverVersion";
@@ -151,8 +151,10 @@ const authProvider: AuthProvider = {
       }
 
       if (accessToken) {
-        if (authMetadata?.token_endpoint) {
-          localStorage.setItem("token_endpoint", authMetadata.token_endpoint);
+        const accessTokenAuthMetadata = authMetadata ?? (await getAuthMetadata(decoded_base_url));
+
+        if (accessTokenAuthMetadata?.token_endpoint) {
+          localStorage.setItem("token_endpoint", accessTokenAuthMetadata.token_endpoint);
         } else {
           localStorage.removeItem("token_endpoint");
         }
