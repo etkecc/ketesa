@@ -300,3 +300,57 @@ describe("LoginPage server probe: staleness guard", () => {
     expect(screen.queryByRole("button", { name: signIn })).toBeNull();
   });
 });
+
+describe("LoginPage access-token submission", () => {
+  it("passes probed auth metadata to the auth provider", async () => {
+    const user = userEvent.setup();
+    const login = vi.fn().mockResolvedValue({ redirectTo: "/" });
+
+    const metadata = {
+      issuer: "https://mas.example.com",
+      authorization_endpoint: "https://mas.example.com/authorize",
+      token_endpoint: "https://mas.example.com/oauth2/token",
+    };
+
+    mockFlows.mockResolvedValue([]);
+    mockAuthMetadata.mockResolvedValue(metadata);
+
+    render(
+      <AppContext.Provider
+        value={{
+          restrictBaseUrl: "https://matrix.example.com",
+          asManagedUsers: [],
+          menu: [],
+          corsCredentials: "include",
+          externalAuthProvider: false,
+        }}
+      >
+        <AdminContext i18nProvider={i18nProvider} authProvider={{ login } as never}>
+          <LoginPage />
+        </AdminContext>
+      </AppContext.Provider>
+    );
+
+    await waitFor(() => expect(mockAuthMetadata).toHaveBeenCalled());
+
+    await user.click(screen.getByRole("tab", { name: auth.access_token }));
+
+    const accessTokenInput = await screen.findByRole("textbox", {
+      name: auth.access_token,
+    });
+
+    await user.type(accessTokenInput, "mpt_test");
+
+    await user.click(screen.getByRole("button", { name: signIn }));
+
+    await waitFor(() =>
+      expect(login).toHaveBeenCalledWith(
+        expect.objectContaining({
+          base_url: "https://matrix.example.com",
+          accessToken: "mpt_test",
+          authMetadata: metadata,
+        })
+      )
+    );
+  });
+});
