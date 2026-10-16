@@ -150,6 +150,14 @@ const authProvider: AuthProvider = {
         pageToRedirectTo = "/server_status";
       }
 
+      if (accessToken) {
+        if (authMetadata?.token_endpoint) {
+          localStorage.setItem("token_endpoint", authMetadata.token_endpoint);
+        } else {
+          localStorage.removeItem("token_endpoint");
+        }
+      }
+
       await detectAndSetMAS();
       initResources();
       fetchServerVersions();

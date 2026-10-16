@@ -135,6 +135,7 @@ const LoginPage = () => {
     const authWithResolved = {
       ...auth,
       base_url: resolvedBaseUrl,
+      authMetadata: probeState.tag === "ready" ? probeState.caps.authMetadata : null,
     };
 
     login(authWithResolved).catch(error => {
