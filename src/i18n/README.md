@@ -10,11 +10,14 @@ Internationalization. 10 languages, each in its own directory.
 
 Each language directory contains:
 - `index.ts`: assembles all domain files into the full translation object
-- `common.ts`: `ra.*` built-ins and app-level strings
+- `base.ts`: vendored react-admin (`ra.*`) messages, present in de, fa, it, ja, pt, ru, uk, zh;
+  `en` and `fr` spread `ra-language-english` / `ra-language-french` instead.
+- `common.ts`: spreads the base messages, then adds `ketesa.*` and other app-level strings
 - `users.ts`: `resources.users.*`
 - `rooms.ts`: `resources.rooms.*`
 - `mas.ts`: all `resources.mas_*` keys
 - `reports.ts`: `resources.reports.*`
+- `user_reports.ts`: `resources.user_reports.*`
 - `misc_resources.ts`: all remaining resource keys
 
 ## Adding a translation key
