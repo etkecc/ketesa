@@ -135,8 +135,8 @@ This document lists all supported APIs and their implementation status.
 
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|:------:|
-| `/_synapse/admin/v1/send_server_notice` | POST | Send a server notice to a user | ✅ |
-| `/_synapse/admin/v1/send_server_notice/{txnId}` | PUT | Send server notice with transaction ID | ⏭️ |
+| `/_synapse/admin/v1/send_server_notice` | POST | Send a server notice to a user (fallback when Web Crypto is unavailable) | ✅ |
+| `/_synapse/admin/v1/send_server_notice/{txnId}` | PUT | Send a server notice to a user (idempotent) | ✅ |
 
 ### Federation
 

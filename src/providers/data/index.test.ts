@@ -864,6 +864,66 @@ describe("dataProvider", () => {
 
     expect([...sentUserIds].sort()).toEqual([...ids].sort());
     expect(new Set(sentUserIds).size).toBe(ids.length);
+
+    // Same text, different recipients: each send needs its own transaction id, or the notices collapse into one.
+    const sentTxnIds = vi.mocked(fetch).mock.calls.map(call => {
+      expect((call[1] as RequestInit).method).toBe("PUT");
+      return String(call[0]).split("/").pop();
+    });
+    expect(new Set(sentTxnIds).size).toBe(ids.length);
+  });
+
+  describe("server notices", () => {
+    it("sends through the idempotent PUT endpoint with a hash of recipient and text", async () => {
+      vi.mocked(fetch).mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ event_id: "$evt" }))));
+
+      await dataProvider.create("servernotices", { data: { id: "@alice:localhost", body: "maintenance tonight" } });
+
+      const [url, opts] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+      expect(opts.method).toBe("PUT");
+      expect(url).toMatch(/^http:\/\/localhost\/_synapse\/admin\/v1\/send_server_notice\/[0-9a-f]{64}$/);
+      expect(JSON.parse(String(opts.body))).toEqual({
+        user_id: "@alice:localhost",
+        content: { msgtype: "m.text", body: "maintenance tonight" },
+      });
+    });
+
+    it("reuses the txn id for the same recipient and text, so a retry cannot duplicate the notice", async () => {
+      vi.mocked(fetch).mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ event_id: "$evt" }))));
+
+      await dataProvider.create("servernotices", { data: { id: "@alice:localhost", body: "maintenance tonight" } });
+      await dataProvider.create("servernotices", { data: { id: "@alice:localhost", body: "maintenance tonight" } });
+
+      // Identical requests collapse into one Synapse transaction, so a user or proxy retry cannot double-send.
+      const urls = vi.mocked(fetch).mock.calls.map(call => call[0]);
+      expect(urls[1]).toBe(urls[0]);
+    });
+
+    it("uses a distinct txn id when the text or the recipient changes", async () => {
+      vi.mocked(fetch).mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ event_id: "$evt" }))));
+
+      await dataProvider.create("servernotices", { data: { id: "@alice:localhost", body: "maintenance tonight" } });
+      await dataProvider.create("servernotices", { data: { id: "@alice:localhost", body: "maintenance tomorrow" } });
+      await dataProvider.create("servernotices", { data: { id: "@bob:localhost", body: "maintenance tonight" } });
+
+      expect(new Set(vi.mocked(fetch).mock.calls.map(call => call[0])).size).toBe(3);
+    });
+
+    it("falls back to the non-idempotent POST when Web Crypto is unavailable (plain http origin)", async () => {
+      const webcrypto = globalThis.crypto;
+      vi.stubGlobal("crypto", { getRandomValues: webcrypto.getRandomValues.bind(webcrypto) });
+      try {
+        vi.mocked(fetch).mockImplementation(() => Promise.resolve(new Response(JSON.stringify({ event_id: "$evt" }))));
+
+        await dataProvider.create("servernotices", { data: { id: "@alice:localhost", body: "maintenance tonight" } });
+
+        const [url, opts] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+        expect(opts.method).toBe("POST");
+        expect(url).toBe("http://localhost/_synapse/admin/v1/send_server_notice");
+      } finally {
+        vi.stubGlobal("crypto", webcrypto);
+      }
+    });
   });
 
   it("threads both user_reports filters into the list query", async () => {

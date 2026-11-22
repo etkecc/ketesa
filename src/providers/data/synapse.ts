@@ -21,6 +21,7 @@ import {
   Whois,
 } from "../types";
 import { returnMXID } from "../../utils/mxid";
+import { sha256Hex } from "../../utils/hash";
 import { normalizeTS } from "../../utils/date";
 
 // Gets Synapse server version via /_synapse/admin/v1/server_version.
@@ -221,14 +222,17 @@ export const synapseResourceMap = {
   },
   servernotices: {
     map: (n: { event_id: string }) => ({ id: n.event_id }),
-    create: (data: RaServerNotice) => ({
-      endpoint: "/_synapse/admin/v1/send_server_notice",
-      body: {
-        user_id: returnMXID(data.id),
-        content: { msgtype: "m.text", body: data.body },
-      },
-      method: "POST",
-    }),
+    create: async (data: RaServerNotice) => {
+      const user_id = returnMXID(data.id);
+      const body = { user_id, content: { msgtype: "m.text", body: data.body } };
+      // No subtle means no secure context (plain http origin), so the legacy non-idempotent call is all we have.
+      if (!crypto.subtle) {
+        return { endpoint: "/_synapse/admin/v1/send_server_notice", body, method: "POST" };
+      }
+      // Deterministic txn id: Synapse replays its cached response instead of sending the notice a second time.
+      const txnId = await sha256Hex(user_id, data.body);
+      return { endpoint: `/_synapse/admin/v1/send_server_notice/${txnId}`, body, method: "PUT" };
+    },
   },
   database_room_statistics: {
     path: "/_synapse/admin/v1/statistics/database/rooms",

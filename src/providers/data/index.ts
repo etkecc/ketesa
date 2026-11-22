@@ -624,7 +624,7 @@ const baseDataProvider: SynapseDataProvider = {
     const { res, baseUrl } = resolveResource(resource);
     if (!("create" in res)) return Promise.reject(new Error(`Create not supported for ${resource}`));
 
-    const create = res.create(params.data);
+    const create = await res.create(params.data);
     const endpoint_url = baseUrl + create.endpoint;
     const { json } = await jsonClient(endpoint_url, {
       method: create.method,
@@ -651,8 +651,8 @@ const baseDataProvider: SynapseDataProvider = {
     if (!("create" in res)) throw Error(`Create ${resource} is not allowed`);
 
     const responses = await Promise.all(
-      params.ids.map(id => {
-        const cre = res.create({ ...params.data, id });
+      params.ids.map(async id => {
+        const cre = await res.create({ ...params.data, id });
         const endpoint_url = homeserver + cre.endpoint;
         return jsonClient(endpoint_url, {
           method: cre.method,

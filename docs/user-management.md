@@ -87,6 +87,10 @@ Server notices are administrative messages delivered to a user as an ordinary Ma
 
 Send one to a single user from the "Send server notice" button in the edit-page toolbar, or to several at once by selecting them in the list and using the same button in the bulk toolbar. A bulk send goes to each selected user individually, one message in each person's own notices room. It is a one-way channel: the user cannot reply back to you through it, so for a real conversation reach them in a normal room.
 
+Each send carries a transaction ID derived from the recipient and the text, and Ketesa sends it through Synapse's idempotent `PUT` endpoint, so a retry cannot deliver the notice twice: pressing Send again after a network error, or a reverse proxy replaying the request, gets the first send's result back instead of a second message. Synapse remembers a transaction ID for 30 to 60 minutes, so sending the exact same text to the same user again inside that window is swallowed as a replay; change the text, even by a character, to notify them again.
+
+Building that transaction ID needs the browser's Web Crypto, which exists only on a secure origin. A Ketesa served over plain `http://` on anything other than `localhost` falls back to the older non-idempotent endpoint, and there a retry can still deliver the notice twice.
+
 ## MAS mode
 
 These features appear only when `externalAuthProvider` is set and [Matrix Authentication Service](./external-auth-provider.md) is configured. MAS keeps its own account-state and session model alongside Synapse's, so a few of these overlap with the native controls and a few replace them.
