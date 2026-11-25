@@ -1,4 +1,4 @@
-FROM node:lts AS builder
+FROM node:24 AS builder
 ARG BASE_PATH=./
 WORKDIR /src
 COPY . /src
